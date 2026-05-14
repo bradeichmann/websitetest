@@ -1,10 +1,65 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>My Website</title>
-  </head>
-  <body>
-    <h1>Hello! My website is working!</h1>
-    <p>This is my first website.</p>
-  </body>
-</html>
+<head>
+  <title>Brad's Totally Radical Home Page</title>
+  <style>
+    body {
+      background-color: #000080;
+      font-family: "Comic Sans MS", cursive;
+      color: #ffff00;
+      margin: 0;
+      padding: 0;
+    }
+    .marquee-bar {
+      background: #ff0000;
+      color: #ffff00;
+      font-size: 14px;
+      padding: 4px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .marquee-inner {
+      display: inline-block;
+      animation: marquee 12s linear infinite;
+    }
+    @keyframes marquee {
+      from { transform: translateX(100vw); }
+      to { transform: translateX(-100%); }
+    }
+    .main-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .left-nav {
+      background: #008000;
+      width: 140px;
+      padding: 8px;
+      border-right: 3px ridge #ffff00;
+      vertical-align: top;
+    }
+    .nav-link {
+      display: block;
+      background: #c0c0c0;
+      color: #000080;
+      font-size: 12px;
+      font-weight: bold;
+      text-decoration: none;
+      border: 3px outset #ffffff;
+      padding: 4px 6px;
+      margin-bottom: 6px;
+      text-align: center;
+      font-family: "Comic Sans MS", cursive;
+    }
+    .nav-link:hover { background: #ffff00; }
+    .center-content {
+      padding: 10px;
+      background: #000080;
+      vertical-align: top;
+    }
+    .hit-counter {
+      background: #000000;
+      color: #00ff00;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 4px 8px;
+      border: 2px inset #
