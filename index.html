@@ -62,4 +62,144 @@
       font-family: monospace;
       font-size: 13px;
       padding: 4px 8px;
-      border: 2px inset #
+      border: 2px inset #888;
+      display: inline-block;
+    }
+    .section-box {
+      border: 3px ridge #ffff00;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #000066;
+    }
+    .blink {
+      animation: blink 0.8s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .under-construction {
+      background: #ffff00;
+      color: #000000;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 3px 8px;
+      border: 2px solid #ff0000;
+      display: inline-block;
+    }
+    .guestbook-btn {
+      background: #ff00ff;
+      color: #ffff00;
+      font-weight: bold;
+      border: 3px outset #ffffff;
+      padding: 5px 12px;
+      font-family: "Comic Sans MS", cursive;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .divider {
+      border: none;
+      border-top: 3px ridge #ffff00;
+      margin: 8px 0;
+    }
+    .spinning {
+      display: inline-block;
+      animation: spin 3s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .footer {
+      background: #000033;
+      color: #888888;
+      font-size: 11px;
+      text-align: center;
+      padding: 6px;
+      border-top: 3px ridge #ffff00;
+      font-family: monospace;
+    }
+    .r1{color:#ff0000} .r2{color:#ff8800} .r3{color:#ffff00}
+    .r4{color:#00ff00} .r5{color:#0088ff} .r6{color:#8800ff}
+  </style>
+</head>
+<body>
+
+  <div class="marquee-bar">
+    <span class="marquee-inner">*** WELCOME TO MY AWESOME HOMEPAGE *** YOU ARE VISITOR #4,892 *** THIS SITE IS BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 AT 800x600 *** SIGN MY GUESTBOOK!!! ***</span>
+  </div>
+
+  <div style="text-align:center; background:#000033; padding:8px; border-bottom:4px ridge #ffff00;">
+    <div style="font-size:28px; font-weight:bold; color:#ff00ff; letter-spacing:2px;">
+      <span class="r1">B</span><span class="r2">R</span><span class="r3">A</span><span class="r4">D</span><span class="r5">'</span><span class="r6">S</span>
+      <span style="color:#00ffff;"> TOTALLY RADICAL</span>
+    </div>
+    <div style="font-size:22px; font-weight:bold; color:#ffff00;">~*~ HOME PAGE ~*~</div>
+    <div style="font-size:12px; color:#00ff00; margin-top:4px;">
+      <span class="spinning">★</span>
+      Last updated: <b>January 14, 1997</b>
+      <span class="spinning">★</span>
+    </div>
+  </div>
+
+  <table class="main-table">
+    <tr>
+      <td class="left-nav">
+        <div style="color:#ffff00; font-size:13px; font-weight:bold; text-align:center; margin-bottom:8px;">~NAVIGATION~</div>
+        <a class="nav-link" href="#">[ HOME ]</a>
+        <a class="nav-link" href="#">[ ABOUT ME ]</a>
+        <a class="nav-link" href="#">[ MY PETS ]</a>
+        <a class="nav-link" href="#">[ COOL LINKS ]</a>
+        <a class="nav-link" href="#">[ PHOTOS ]</a>
+        <a class="nav-link" href="#">[ GUESTBOOK ]</a>
+        <hr class="divider">
+        <div style="font-size:11px; color:#ffff00; text-align:center;">Visitors:</div>
+        <div style="text-align:center; margin-top:4px;"><span class="hit-counter">004892</span></div>
+        <hr class="divider">
+        <div style="text-align:center;">
+          <span class="under-construction">🚧 UNDER<br>CONSTRUCTION</span>
+        </div>
+      </td>
+
+      <td class="center-content">
+        <div class="section-box">
+          <div style="font-size:16px; font-weight:bold; color:#00ffff;">
+            <span class="blink">&#9658;</span> WELCOME TO MY PAGE!!! <span class="blink">&#9668;</span>
+          </div>
+          <hr class="divider">
+          <p style="font-size:13px; margin:6px 0; color:#ffffff; line-height:1.6;">
+            Hiya!!! My name is <b style="color:#ff00ff;">Brad</b> and this is my TOTALLY AWESOME homepage!!
+            I made this all by myself using <b style="color:#ffff00;">Microsoft FrontPage 97</b>!!!
+            Please sign my guestbook and add me to your favorites!!
+          </p>
+          <p style="font-size:13px; margin:6px 0; color:#ffffff;">
+            &#9733; I like: computers, the X-Files, Tamagotchis, Beavis &amp; Butt-Head, and PIZZA!!!<br>
+            &#9733; Favorite band: <b style="color:#ff00ff;">Hanson</b><br>
+            &#9733; Favorite movie: <b style="color:#ff00ff;">Space Jam</b>
+          </p>
+        </div>
+
+        <div class="section-box">
+          <div style="font-size:15px; font-weight:bold; color:#00ffff;">~ COOL STUFF ON THE WEB ~</div>
+          <hr class="divider">
+          <p style="font-size:13px; color:#ffffff; margin:6px 0; line-height:1.8;">
+            &#9658; <span style="color:#ff00ff; text-decoration:underline;">AltaVista Search Engine</span> - the BEST search engine!!!<br>
+            &#9658; <span style="color:#ff00ff; text-decoration:underline;">Geocities</span> - get your FREE homepage!!!<br>
+            &#9658; <span style="color:#ff00ff; text-decoration:underline;">AOL Instant Messenger</span> - my screenname is CoolDude1997!!!<br>
+            &#9658; <span style="color:#ff00ff; text-decoration:underline;">Napster</span> - FREE music!!!! (shhh!!!)
+          </p>
+        </div>
+
+        <div style="text-align:center; margin-top:8px;">
+          <button class="guestbook-btn">&#9996; SIGN MY GUESTBOOK &#9996;</button>
+          &nbsp;&nbsp;
+          <span style="font-size:12px; color:#00ff00;">Email me: brad@aol.com</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    &copy; 1997 Brad's Homepage &nbsp;|&nbsp; Best viewed in Netscape Navigator 4.0 &nbsp;|&nbsp; 800x600 resolution &nbsp;|&nbsp;
+    <span style="color:#ff00ff;">No frames version coming soon!!!</span>
+  </div>
+
+</body>
+</html>
