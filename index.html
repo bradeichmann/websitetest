@@ -1,205 +1,433 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Brad's Totally Radical Home Page</title>
-  <style>
-    body {
-      background-color: #000080;
-      font-family: "Comic Sans MS", cursive;
-      color: #ffff00;
-      margin: 0;
-      padding: 0;
-    }
-    .marquee-bar {
-      background: #ff0000;
-      color: #ffff00;
-      font-size: 14px;
-      padding: 4px 0;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .marquee-inner {
-      display: inline-block;
-      animation: marquee 12s linear infinite;
-    }
-    @keyframes marquee {
-      from { transform: translateX(100vw); }
-      to { transform: translateX(-100%); }
-    }
-    .main-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .left-nav {
-      background: #008000;
-      width: 140px;
-      padding: 8px;
-      border-right: 3px ridge #ffff00;
-      vertical-align: top;
-    }
-    .nav-link {
-      display: block;
-      background: #c0c0c0;
-      color: #000080;
-      font-size: 12px;
-      font-weight: bold;
-      text-decoration: none;
-      border: 3px outset #ffffff;
-      padding: 4px 6px;
-      margin-bottom: 6px;
-      text-align: center;
-      font-family: "Comic Sans MS", cursive;
-    }
-    .nav-link:hover { background: #ffff00; }
-    .center-content {
-      padding: 10px;
-      background: #000080;
-      vertical-align: top;
-    }
-    .hit-counter {
-      background: #000000;
-      color: #00ff00;
-      font-family: monospace;
-      font-size: 13px;
-      padding: 4px 8px;
-      border: 2px inset #888;
-      display: inline-block;
-    }
-    .section-box {
-      border: 3px ridge #ffff00;
-      padding: 8px;
-      margin-bottom: 10px;
-      background: #000066;
-    }
-    .blink {
-      animation: blink 0.8s step-end infinite;
-    }
-    @keyframes blink { 50% { opacity: 0; } }
-    .under-construction {
-      background: #ffff00;
-      color: #000000;
-      font-weight: bold;
-      font-size: 12px;
-      padding: 3px 8px;
-      border: 2px solid #ff0000;
-      display: inline-block;
-    }
-    .guestbook-btn {
-      background: #ff00ff;
-      color: #ffff00;
-      font-weight: bold;
-      border: 3px outset #ffffff;
-      padding: 5px 12px;
-      font-family: "Comic Sans MS", cursive;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .divider {
-      border: none;
-      border-top: 3px ridge #ffff00;
-      margin: 8px 0;
-    }
-    .spinning {
-      display: inline-block;
-      animation: spin 3s linear infinite;
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .footer {
-      background: #000033;
-      color: #888888;
-      font-size: 11px;
-      text-align: center;
-      padding: 6px;
-      border-top: 3px ridge #ffff00;
-      font-family: monospace;
-    }
-    .r1{color:#ff0000} .r2{color:#ff8800} .r3{color:#ffff00}
-    .r4{color:#00ff00} .r5{color:#0088ff} .r6{color:#8800ff}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NYC Subway Live Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d1f;color:#fff;}
+
+  #header{
+    background:#1a1a2e;
+    padding:10px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    flex-wrap:wrap;
+  }
+  #header h1{font-size:15px;font-weight:500;letter-spacing:0.3px;}
+  .pill{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .live{background:#1a5c2a;color:#6ee78a;}
+  .delayed{background:#5c3a1a;color:#f59e0b;}
+  #refresh-btn{
+    margin-left:auto;
+    background:transparent;
+    border:0.5px solid rgba(255,255,255,0.2);
+    color:#6ee78a;
+    font-size:12px;
+    padding:5px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background 0.15s;
+  }
+  #refresh-btn:hover{background:rgba(110,231,138,0.08);}
+
+  #main{display:flex;height:calc(100vh - 84px);}
+
+  #map-wrap{flex:1;position:relative;overflow:hidden;background:#0a1628;}
+  canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+  #loading{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    color:#555;font-size:13px;text-align:center;
+    line-height:1.8;
+  }
+  #loading .spinner{
+    display:inline-block;width:18px;height:18px;
+    border:2px solid rgba(255,255,255,0.1);
+    border-top-color:#6ee78a;
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+    margin-bottom:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .tooltip{
+    position:absolute;
+    background:#1a1a3e;
+    border:0.5px solid rgba(255,255,255,0.2);
+    border-radius:6px;
+    padding:8px 10px;
+    font-size:11px;
+    pointer-events:none;
+    display:none;
+    z-index:10;
+    max-width:170px;
+    line-height:1.7;
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  }
+  .tooltip strong{font-size:13px;display:block;margin-bottom:2px;}
+
+  #sidebar{
+    width:200px;
+    background:#13132a;
+    border-left:1px solid rgba(255,255,255,0.07);
+    overflow-y:auto;
+    padding:12px;
+    flex-shrink:0;
+  }
+  #sidebar h3{
+    font-size:10px;font-weight:600;
+    color:#555;text-transform:uppercase;
+    letter-spacing:0.6px;margin-bottom:8px;
+  }
+  .alert-card{
+    background:#1e1e3a;
+    border-left:3px solid #f59e0b;
+    border-radius:4px;
+    padding:8px;
+    margin-bottom:6px;
+  }
+  .alert-card.severe{border-left-color:#ef4444;}
+  .alert-line-label{font-size:10px;font-weight:700;color:#f59e0b;margin-bottom:3px;}
+  .alert-card.severe .alert-line-label{color:#ef4444;}
+  .alert-msg{font-size:10px;color:#bbb;line-height:1.45;}
+
+  .legend-section{margin-top:14px;}
+  .leg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:11px;color:#ccc;}
+  .leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .leg-divider{border:none;border-top:0.5px solid rgba(255,255,255,0.08);margin:8px 0;}
+
+  #ticker{
+    background:#0a0a18;
+    font-size:11px;color:#777;
+    padding:5px 0;
+    white-space:nowrap;
+    overflow:hidden;
+    height:28px;
+    border-top:1px solid rgba(255,255,255,0.05);
+  }
+  #ticker-inner{display:inline-block;padding-left:100%;animation:tick 40s linear infinite;}
+  @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-100%);}}</style>
 </head>
 <body>
 
-  <div class="marquee-bar">
-    <span class="marquee-inner">*** WELCOME TO MY AWESOME HOMEPAGE *** YOU ARE VISITOR #4,892 *** THIS SITE IS BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 AT 800x600 *** SIGN MY GUESTBOOK!!! ***</span>
-  </div>
+<div id="header">
+  <h1>🚇 NYC Subway Live Tracker</h1>
+  <span class="pill live">● LIVE</span>
+  <span class="pill delayed" id="dpill">⚠ — DELAYS</span>
+  <button id="refresh-btn" onclick="doRefresh()">↻ Refresh</button>
+  <span style="font-size:10px;color:#444;margin-left:4px;">Updated: <span id="ts">loading…</span></span>
+</div>
 
-  <div style="text-align:center; background:#000033; padding:8px; border-bottom:4px ridge #ffff00;">
-    <div style="font-size:28px; font-weight:bold; color:#ff00ff; letter-spacing:2px;">
-      <span class="r1">B</span><span class="r2">R</span><span class="r3">A</span><span class="r4">D</span><span class="r5">'</span><span class="r6">S</span>
-      <span style="color:#00ffff;"> TOTALLY RADICAL</span>
+<div id="main">
+  <div id="map-wrap">
+    <canvas id="c"></canvas>
+    <div id="loading">
+      <div class="spinner"></div><br/>
+      Loading NYC map data…
     </div>
-    <div style="font-size:22px; font-weight:bold; color:#ffff00;">~*~ HOME PAGE ~*~</div>
-    <div style="font-size:12px; color:#00ff00; margin-top:4px;">
-      <span class="spinning">★</span>
-      Last updated: <b>January 14, 1997</b>
-      <span class="spinning">★</span>
+    <div class="tooltip" id="tip"></div>
+  </div>
+
+  <div id="sidebar">
+    <h3>Service Alerts</h3>
+    <div id="alerts-container"></div>
+
+    <div class="legend-section">
+      <h3 style="margin-top:0;">Subway Lines</h3>
+      <div class="leg-row"><div class="leg-dot" style="background:#EE352E"></div>1 · 2 · 3</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#00933C"></div>4 · 5 · 6</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#B933AD"></div>7</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#0039A6"></div>A · C · E</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#FF6319"></div>B · D · F · M</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#6CBE45"></div>G</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#996633"></div>J · Z</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#FCCC0A"></div>N · Q · R · W</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#A7A9AC"></div>L</div>
+      <hr class="leg-divider"/>
+      <div class="leg-row"><div class="leg-dot" style="background:#f59e0b;border:2px solid rgba(255,255,255,0.4)"></div>Delayed train</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ef4444;border:2px solid rgba(255,255,255,0.4)"></div>Severe delay</div>
     </div>
   </div>
+</div>
 
-  <table class="main-table">
-    <tr>
-      <td class="left-nav">
-        <div style="color:#ffff00; font-size:13px; font-weight:bold; text-align:center; margin-bottom:8px;">~NAVIGATION~</div>
-        <a class="nav-link" href="#">[ HOME ]</a>
-        <a class="nav-link" href="#">[ ABOUT ME ]</a>
-        <a class="nav-link" href="#">[ MY PETS ]</a>
-        <a class="nav-link" href="#">[ COOL LINKS ]</a>
-        <a class="nav-link" href="#">[ PHOTOS ]</a>
-        <a class="nav-link" href="#">[ GUESTBOOK ]</a>
-        <hr class="divider">
-        <div style="font-size:11px; color:#ffff00; text-align:center;">Visitors:</div>
-        <div style="text-align:center; margin-top:4px;"><span class="hit-counter">004892</span></div>
-        <hr class="divider">
-        <div style="text-align:center;">
-          <span class="under-construction">🚧 UNDER<br>CONSTRUCTION</span>
-        </div>
-      </td>
+<div id="ticker"><span id="ticker-inner" style="padding-right:80px;">Loading service alerts…</span></div>
 
-      <td class="center-content">
-        <div class="section-box">
-          <div style="font-size:16px; font-weight:bold; color:#00ffff;">
-            <span class="blink">&#9658;</span> WELCOME TO MY PAGE!!! <span class="blink">&#9668;</span>
-          </div>
-          <hr class="divider">
-          <p style="font-size:13px; margin:6px 0; color:#ffffff; line-height:1.6;">
-            Hiya!!! My name is <b style="color:#ff00ff;">Brad</b> and this is my TOTALLY AWESOME homepage!!
-            I made this all by myself using <b style="color:#ffff00;">Microsoft FrontPage 97</b>!!!
-            Please sign my guestbook and add me to your favorites!!
-          </p>
-          <p style="font-size:13px; margin:6px 0; color:#ffffff;">
-            &#9733; I like: computers, the X-Files, Tamagotchis, Beavis &amp; Butt-Head, and PIZZA!!!<br>
-            &#9733; Favorite band: <b style="color:#ff00ff;">Hanson</b><br>
-            &#9733; Favorite movie: <b style="color:#ff00ff;">Space Jam</b>
-          </p>
-        </div>
+<script>
+/* ─── Config ─────────────────────────────────────────── */
+const LINE_COLORS={
+  '1':'#EE352E','2':'#EE352E','3':'#EE352E',
+  '4':'#00933C','5':'#00933C','6':'#00933C',
+  '7':'#B933AD',
+  'A':'#0039A6','C':'#0039A6','E':'#0039A6',
+  'B':'#FF6319','D':'#FF6319','F':'#FF6319','M':'#FF6319',
+  'G':'#6CBE45','J':'#996633','Z':'#996633',
+  'N':'#FCCC0A','Q':'#FCCC0A','R':'#FCCC0A','W':'#FCCC0A',
+  'L':'#A7A9AC','S':'#808183'
+};
 
-        <div class="section-box">
-          <div style="font-size:15px; font-weight:bold; color:#00ffff;">~ COOL STUFF ON THE WEB ~</div>
-          <hr class="divider">
-          <p style="font-size:13px; color:#ffffff; margin:6px 0; line-height:1.8;">
-            &#9658; <span style="color:#ff00ff; text-decoration:underline;">AltaVista Search Engine</span> - the BEST search engine!!!<br>
-            &#9658; <span style="color:#ff00ff; text-decoration:underline;">Geocities</span> - get your FREE homepage!!!<br>
-            &#9658; <span style="color:#ff00ff; text-decoration:underline;">AOL Instant Messenger</span> - my screenname is CoolDude1997!!!<br>
-            &#9658; <span style="color:#ff00ff; text-decoration:underline;">Napster</span> - FREE music!!!! (shhh!!!)
-          </p>
-        </div>
+const BOROUGH_STYLES={
+  'Manhattan':    {fill:'rgba(100,120,220,0.14)',stroke:'rgba(140,160,255,0.5)'},
+  'Brooklyn':     {fill:'rgba(60,160,110,0.14)', stroke:'rgba(80,210,140,0.48)'},
+  'Queens':       {fill:'rgba(190,150,60,0.14)', stroke:'rgba(230,190,80,0.48)'},
+  'Bronx':        {fill:'rgba(160,90,200,0.14)', stroke:'rgba(200,130,240,0.48)'},
+  'Staten Island':{fill:'rgba(60,160,180,0.14)', stroke:'rgba(80,200,220,0.48)'},
+};
 
-        <div style="text-align:center; margin-top:8px;">
-          <button class="guestbook-btn">&#9996; SIGN MY GUESTBOOK &#9996;</button>
-          &nbsp;&nbsp;
-          <span style="font-size:12px; color:#00ff00;">Email me: brad@aol.com</span>
-        </div>
-      </td>
-    </tr>
-  </table>
+/* ─── Simulated train positions (replaced by MTA API later) ── */
+const TRAINS=[
+  {line:'1',color:'#EE352E',lat:40.762,lng:-73.985,dest:'Van Cortlandt Pk',delay:0},
+  {line:'2',color:'#EE352E',lat:40.684,lng:-73.978,dest:'Wakefield - 241 St',delay:8},
+  {line:'3',color:'#EE352E',lat:40.714,lng:-74.008,dest:'New Lots Av',delay:0},
+  {line:'4',color:'#00933C',lat:40.753,lng:-73.977,dest:'Woodlawn',delay:0},
+  {line:'5',color:'#00933C',lat:40.808,lng:-73.940,dest:'Flatbush Av',delay:12},
+  {line:'6',color:'#00933C',lat:40.730,lng:-73.991,dest:'Pelham Bay Park',delay:0},
+  {line:'7',color:'#B933AD',lat:40.754,lng:-73.845,dest:'Flushing - Main St',delay:0},
+  {line:'A',color:'#0039A6',lat:40.755,lng:-73.987,dest:'Far Rockaway',delay:0},
+  {line:'C',color:'#0039A6',lat:40.722,lng:-74.003,dest:'Euclid Av',delay:5},
+  {line:'E',color:'#0039A6',lat:40.751,lng:-73.997,dest:'Jamaica - 179 St',delay:0},
+  {line:'B',color:'#FF6319',lat:40.677,lng:-73.973,dest:'Norwood - 205 St',delay:0},
+  {line:'D',color:'#FF6319',lat:40.861,lng:-73.899,dest:'Norwood - 205 St',delay:0},
+  {line:'F',color:'#FF6319',lat:40.737,lng:-73.998,dest:'Jamaica - 179 St',delay:6},
+  {line:'G',color:'#6CBE45',lat:40.710,lng:-73.951,dest:'Church Av',delay:0},
+  {line:'J',color:'#996633',lat:40.707,lng:-74.011,dest:'Jamaica Center',delay:0},
+  {line:'L',color:'#A7A9AC',lat:40.718,lng:-73.974,dest:'8 Av',delay:0},
+  {line:'N',color:'#FCCC0A',lat:40.735,lng:-73.990,dest:'Astoria - Ditmars',delay:3},
+  {line:'Q',color:'#FCCC0A',lat:40.763,lng:-73.967,dest:'96 St',delay:0},
+  {line:'R',color:'#FCCC0A',lat:40.692,lng:-73.987,dest:'Bay Ridge - 95 St',delay:0},
+];
 
-  <div class="footer">
-    &copy; 1997 Brad's Homepage &nbsp;|&nbsp; Best viewed in Netscape Navigator 4.0 &nbsp;|&nbsp; 800x600 resolution &nbsp;|&nbsp;
-    <span style="color:#ff00ff;">No frames version coming soon!!!</span>
-  </div>
+const ALERTS=[
+  {line:'5',severity:'severe',msg:'No service between Bowling Green and Flatbush Av due to signal problems at 14 St.'},
+  {line:'C',severity:'moderate',msg:'Delays of up to 10 minutes due to track maintenance at Spring St.'},
+  {line:'F',severity:'moderate',msg:'Residual delays following an earlier incident at 34 St - Herald Sq.'},
+  {line:'N',severity:'moderate',msg:'Skip-stop service operating between DeKalb Av and Times Sq - 42 St.'},
+];
 
+/* ─── GeoJSON data sources (NYC Open Data) ────────────── */
+// Borough boundaries
+const BOROUGH_URL='https://data.cityofnewyork.us/api/geospatial/7t3b-ywvw?method=export&type=GeoJSON';
+// Subway lines
+const SUBWAY_URL='https://data.cityofnewyork.us/api/geospatial/3qem-6v3v?method=export&type=GeoJSON';
+
+/* ─── Canvas setup ────────────────────────────────────── */
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const tip=document.getElementById('tip');
+let W=0,H=0;
+let boroughGeo=null,subwayGeo=null;
+
+// Geographic bounds: all of NYC + a little padding
+const BOUNDS={minLng:-74.27,maxLng:-73.68,minLat:40.48,maxLat:40.93};
+
+function project(lng,lat){
+  const x=(lng-BOUNDS.minLng)/(BOUNDS.maxLng-BOUNDS.minLng)*W;
+  const y=(1-(lat-BOUNDS.minLat)/(BOUNDS.maxLat-BOUNDS.minLat))*H;
+  return[x,y];
+}
+
+/* ─── Drawing helpers ─────────────────────────────────── */
+function traceRing(ring){
+  if(!ring||ring.length<2)return;
+  const[sx,sy]=project(ring[0][0],ring[0][1]);
+  ctx.moveTo(sx,sy);
+  for(let i=1;i<ring.length;i++){
+    const[x,y]=project(ring[i][0],ring[i][1]);
+    ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+}
+
+function drawBorough(feature){
+  const name=feature.properties.boro_name||feature.properties.name||'';
+  const style=BOROUGH_STYLES[name]||{fill:'rgba(100,100,100,0.1)',stroke:'rgba(180,180,180,0.3)'};
+  ctx.beginPath();
+  const polys=feature.geometry.type==='Polygon'
+    ?[feature.geometry.coordinates]
+    :feature.geometry.coordinates;
+  polys.forEach(poly=>poly.forEach(ring=>traceRing(ring)));
+  ctx.fillStyle=style.fill;
+  ctx.fill('evenodd');
+  ctx.strokeStyle=style.stroke;
+  ctx.lineWidth=1.3;
+  ctx.stroke();
+
+  // borough label at polygon centroid
+  const flat=feature.geometry.type==='Polygon'
+    ?feature.geometry.coordinates[0]
+    :feature.geometry.coordinates[0][0];
+  let sx=0,sy=0;
+  flat.forEach(c=>{const[px,py]=project(c[0],c[1]);sx+=px;sy+=py;});
+  ctx.font='500 10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,255,255,0.22)';
+  ctx.fillText(name.toUpperCase(),sx/flat.length,sy/flat.length);
+}
+
+function drawSubwayLine(feature){
+  const rt=feature.properties.rt_symbol||'';
+  const color=LINE_COLORS[rt]||'#888';
+  ctx.beginPath();
+  ctx.strokeStyle=color;
+  ctx.lineWidth=2;
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  const segs=feature.geometry.type==='LineString'
+    ?[feature.geometry.coordinates]
+    :feature.geometry.coordinates;
+  segs.forEach(seg=>{
+    if(!seg.length)return;
+    const[sx,sy]=project(seg[0][0],seg[0][1]);
+    ctx.moveTo(sx,sy);
+    for(let i=1;i<seg.length;i++){
+      const[x,y]=project(seg[i][0],seg[i][1]);
+      ctx.lineTo(x,y);
+    }
+  });
+  ctx.stroke();
+}
+
+function drawTrain(t){
+  const[px,py]=project(t.lng,t.lat);
+  const ringColor=t.delay>10?'#ef4444':t.delay>0?'#f59e0b':'#ffffff';
+
+  if(t.delay>0){
+    ctx.beginPath();
+    ctx.arc(px,py,15,0,Math.PI*2);
+    ctx.fillStyle=t.delay>10?'rgba(239,68,68,0.18)':'rgba(245,158,11,0.18)';
+    ctx.fill();
+  }
+  ctx.beginPath();
+  ctx.arc(px,py,10,0,Math.PI*2);
+  ctx.fillStyle=t.color;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(px,py,10,0,Math.PI*2);
+  ctx.strokeStyle=ringColor;
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.font='bold 9px sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(t.line,px,py);
+}
+
+/* ─── Main draw ───────────────────────────────────────── */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // water background
+  ctx.fillStyle='#091320';
+  ctx.fillRect(0,0,W,H);
+
+  if(boroughGeo){
+    boroughGeo.features.forEach(drawBorough);
+  }
+  if(subwayGeo){
+    ctx.globalAlpha=0.85;
+    subwayGeo.features.forEach(drawSubwayLine);
+    ctx.globalAlpha=1;
+  }
+  TRAINS.forEach(drawTrain);
+}
+
+function resize(){
+  const wrap=document.getElementById('map-wrap');
+  W=wrap.clientWidth;
+  H=wrap.clientHeight;
+  canvas.width=W;
+  canvas.height=H;
+  draw();
+}
+
+/* ─── Tooltip ─────────────────────────────────────────── */
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  let found=null;
+  TRAINS.forEach(t=>{
+    const[px,py]=project(t.lng,t.lat);
+    if(Math.hypot(mx-px,my-py)<14)found=t;
+  });
+  if(found){
+    const dl=found.delay>0
+      ?`<span style="color:${found.delay>10?'#ef4444':'#f59e0b'}">⚠ ${found.delay} min delay</span>`
+      :`<span style="color:#6ee78a">✓ On time</span>`;
+    tip.innerHTML=`<strong style="color:${found.color}">Line ${found.line}</strong>To: ${found.dest}<br>${dl}`;
+    tip.style.display='block';
+    tip.style.left=(e.clientX-r.left+16)+'px';
+    tip.style.top=(e.clientY-r.top-12)+'px';
+  } else {
+    tip.style.display='none';
+  }
+});
+canvas.addEventListener('mouseleave',()=>tip.style.display='none');
+
+/* ─── Alerts sidebar & ticker ─────────────────────────── */
+function renderAlerts(){
+  const el=document.getElementById('alerts-container');
+  el.innerHTML='';
+  ALERTS.forEach(a=>{
+    el.innerHTML+=`
+      <div class="alert-card ${a.severity==='severe'?'severe':''}">
+        <div class="alert-line-label">${a.severity==='severe'?'🔴':'⚠️'} Line ${a.line}</div>
+        <div class="alert-msg">${a.msg}</div>
+      </div>`;
+  });
+  document.getElementById('dpill').textContent=
+    `⚠ ${TRAINS.filter(t=>t.delay>0).length} DELAYS`;
+  document.getElementById('ticker-inner').textContent=
+    ALERTS.map(a=>`⚠ Line ${a.line}: ${a.msg}`).join('   •   ');
+}
+
+/* ─── Train animation (simulated movement) ────────────── */
+function animateTrains(){
+  TRAINS.forEach(t=>{
+    t.lat+=(Math.random()-0.5)*0.0007;
+    t.lng+=(Math.random()-0.5)*0.0007;
+  });
+  draw();
+}
+
+function doRefresh(){
+  animateTrains();
+  document.getElementById('ts').textContent=new Date().toLocaleTimeString();
+}
+
+/* ─── Load real GeoJSON from NYC Open Data ────────────── */
+async function loadData(){
+  try{
+    const[bRes,sRes]=await Promise.all([
+      fetch(BOROUGH_URL),
+      fetch(SUBWAY_URL),
+    ]);
+    if(!bRes.ok||!sRes.ok)throw new Error('Network response not ok');
+    [boroughGeo,subwayGeo]=await Promise.all([bRes.json(),sRes.json()]);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('ts').textContent=new Date().toLocaleTimeString();
+  }catch(err){
+    console.warn('GeoJSON fetch failed:',err);
+    document.getElementById('loading').innerHTML=
+      '⚠️ Could not load map data.<br><small style="color:#444">Check your connection or CORS settings.</small>';
+    setTimeout(()=>document.getElementById('loading').style.display='none',4000);
+    document.getElementById('ts').textContent='error';
+  }
+  resize();
+  setInterval(animateTrains,6000);
+}
+
+/* ─── Boot ────────────────────────────────────────────── */
+renderAlerts();
+window.addEventListener('resize',resize);
+loadData();
+</script>
 </body>
 </html>
+
