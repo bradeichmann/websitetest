@@ -34,6 +34,15 @@ canvas{position:absolute;top:0;left:0}
 .lr{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:10px;color:#aaa}
 .ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 hr.ls{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:7px 0}
+.filter-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.lb{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:10px;font-weight:800;cursor:pointer;border:2px solid rgba(255,255,255,0.25);transition:opacity 0.15s,transform 0.1s;user-select:none}
+.lb:hover{transform:scale(1.12)}
+.lb.off{opacity:0.2;border-color:transparent}
+#filter-all,#filter-none{font-size:9px;font-weight:700;border-radius:4px;padding:3px 7px;cursor:pointer;width:49%;}
+#filter-all{color:#4ade80;background:transparent;border:1px solid rgba(74,222,128,0.3)}
+#filter-all:hover{background:rgba(74,222,128,0.08)}
+#filter-none{color:#f87171;background:transparent;border:1px solid rgba(248,113,113,0.3)}
+#filter-none:hover{background:rgba(248,113,113,0.08)}
 #tkr{height:26px;background:#060e18;border-top:1px solid rgba(255,255,255,0.05);overflow:hidden;font-size:10px;color:#444;white-space:nowrap;display:flex;align-items:center}
 #ti{display:inline-block;padding-left:100%;animation:tk 50s linear infinite}
 @keyframes tk{from{transform:translateX(0)}to{transform:translateX(-100%)}}
@@ -65,16 +74,45 @@ hr.ls{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:7px 0}
     <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line N</div><div class="am">Skip-stop service DeKalb&#x2013;Times Sq.</div></div>
     <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line 2</div><div class="am">8 min delays near Atlantic Av.</div></div>
     <div class="leg">
-      <h3 style="margin-top:0">Lines</h3>
-      <div class="lr"><div class="ld" style="background:#EE352E"></div>1 &middot; 2 &middot; 3</div>
-      <div class="lr"><div class="ld" style="background:#00933C"></div>4 &middot; 5 &middot; 6</div>
-      <div class="lr"><div class="ld" style="background:#B933AD"></div>7</div>
-      <div class="lr"><div class="ld" style="background:#0039A6"></div>A &middot; C &middot; E</div>
-      <div class="lr"><div class="ld" style="background:#FF6319"></div>B &middot; D &middot; F &middot; M</div>
-      <div class="lr"><div class="ld" style="background:#6CBE45"></div>G</div>
-      <div class="lr"><div class="ld" style="background:#996633"></div>J &middot; Z</div>
-      <div class="lr"><div class="ld" style="background:#FCCC0A"></div>N &middot; Q &middot; R &middot; W</div>
-      <div class="lr"><div class="ld" style="background:#A7A9AC"></div>L</div>
+      <h3 style="margin-top:0">Filter Lines</h3>
+      <div style="display:flex;gap:4px;margin-bottom:6px">
+        <button id="filter-all" onclick="filterAll()">&#x2713; All</button>
+        <button id="filter-none" onclick="filterNone()">&#x2715; None</button>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="1" style="background:#EE352E;color:#fff" onclick="toggleLine('1')" title="Line 1">1</div>
+        <div class="lb" data-line="2" style="background:#EE352E;color:#fff" onclick="toggleLine('2')" title="Line 2">2</div>
+        <div class="lb" data-line="3" style="background:#EE352E;color:#fff" onclick="toggleLine('3')" title="Line 3">3</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="4" style="background:#00933C;color:#fff" onclick="toggleLine('4')" title="Line 4">4</div>
+        <div class="lb" data-line="5" style="background:#00933C;color:#fff" onclick="toggleLine('5')" title="Line 5">5</div>
+        <div class="lb" data-line="6" style="background:#00933C;color:#fff" onclick="toggleLine('6')" title="Line 6">6</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="7" style="background:#B933AD;color:#fff" onclick="toggleLine('7')" title="Line 7">7</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="A" style="background:#0039A6;color:#fff" onclick="toggleLine('A')" title="Line A">A</div>
+        <div class="lb" data-line="C" style="background:#0039A6;color:#fff" onclick="toggleLine('C')" title="Line C">C</div>
+        <div class="lb" data-line="E" style="background:#0039A6;color:#fff" onclick="toggleLine('E')" title="Line E">E</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="B" style="background:#FF6319;color:#fff" onclick="toggleLine('B')" title="Line B">B</div>
+        <div class="lb" data-line="D" style="background:#FF6319;color:#fff" onclick="toggleLine('D')" title="Line D">D</div>
+        <div class="lb" data-line="F" style="background:#FF6319;color:#fff" onclick="toggleLine('F')" title="Line F">F</div>
+        <div class="lb" data-line="M" style="background:#FF6319;color:#fff" onclick="toggleLine('M')" title="Line M">M</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="G" style="background:#6CBE45;color:#fff" onclick="toggleLine('G')" title="Line G">G</div>
+        <div class="lb" data-line="J" style="background:#996633;color:#fff" onclick="toggleLine('J')" title="Line J">J</div>
+        <div class="lb" data-line="L" style="background:#A7A9AC;color:#111" onclick="toggleLine('L')" title="Line L">L</div>
+      </div>
+      <div class="filter-row">
+        <div class="lb" data-line="N" style="background:#FCCC0A;color:#111" onclick="toggleLine('N')" title="Line N">N</div>
+        <div class="lb" data-line="Q" style="background:#FCCC0A;color:#111" onclick="toggleLine('Q')" title="Line Q">Q</div>
+        <div class="lb" data-line="R" style="background:#FCCC0A;color:#111" onclick="toggleLine('R')" title="Line R">R</div>
+      </div>
       <hr class="ls"/>
       <div class="lr"><div class="ld" style="background:#fb923c;outline:2px solid rgba(255,255,255,.3);outline-offset:1px"></div>Delayed</div>
       <div class="lr"><div class="ld" style="background:#f87171;outline:2px solid rgba(255,255,255,.3);outline-offset:1px"></div>Severe delay</div>
@@ -155,6 +193,7 @@ function drawBoroughs(){
 function drawLines(){
   const lw=Math.max(1.5,Math.min(5,2.5*scale));
   for(const[line,route]of Object.entries(ROUTES)){
+    if(!activeLines.has(line))continue;
     const col=LC[line]||'#888';
     ctx.beginPath();
     ctx.strokeStyle=col; ctx.lineWidth=lw;
@@ -222,6 +261,7 @@ function trainPos(t){
 function drawTrains(){
   const r=9;
   TRAINS.forEach(t=>{
+    if(!activeLines.has(t.line))return;
     const pos=trainPos(t); if(!pos)return;
     const[sx,sy]=pos;
     if(sx<-25||sy<-25||sx>W+25||sy>H+25)return;
@@ -345,6 +385,35 @@ function advance(){
   draw();
 }
 function doRefresh(){advance();document.getElementById('ts').textContent=new Date().toLocaleTimeString();}
+
+// ── Line filter ────────────────────────────────────────────
+const activeLines = new Set(Object.keys(ROUTES));
+
+function toggleLine(line) {
+  if (activeLines.has(line)) {
+    activeLines.delete(line);
+  } else {
+    activeLines.add(line);
+  }
+  const btn = document.querySelector(`.lb[data-line="${line}"]`);
+  if (btn) btn.classList.toggle('off', !activeLines.has(line));
+  draw();
+}
+
+function filterAll() {
+  Object.keys(ROUTES).forEach(line => {
+    activeLines.add(line);
+    const btn = document.querySelector(`.lb[data-line="${line}"]`);
+    if (btn) btn.classList.remove('off');
+  });
+  draw();
+}
+
+function filterNone() {
+  activeLines.clear();
+  document.querySelectorAll('.lb').forEach(btn => btn.classList.add('off'));
+  draw();
+}
 
 window.addEventListener('resize',()=>{resize();fitMap();draw();});
 setTimeout(()=>{resize();fitMap();draw();},50);
