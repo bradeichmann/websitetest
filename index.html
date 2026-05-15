@@ -6,343 +6,276 @@
 <title>NYC Subway Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0a0a14;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff}
-#header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#12121f;border-bottom:1px solid rgba(255,255,255,0.07);height:44px}
-#header h1{font-size:14px;font-weight:500;letter-spacing:.2px}
+html,body{height:100%;overflow:hidden;background:#060610;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff}
+#hdr{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0e0e1e;border-bottom:1px solid rgba(255,255,255,0.07);height:44px}
+#hdr h1{font-size:14px;font-weight:500}
 .pill{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700}
 .live{background:#0d3b1e;color:#4ade80}
-.delayed{background:#3b1a0d;color:#fb923c}
-#refresh-btn{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);color:#4ade80;font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer}
-#refresh-btn:hover{background:rgba(74,222,128,.08)}
+.del{background:#3b1a0d;color:#fb923c}
+#rbtn{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);color:#4ade80;font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer}
 #ts{font-size:10px;color:#444}
-
 #wrap{display:flex;height:calc(100vh - 72px)}
-#map-area{flex:1;position:relative;overflow:hidden;background:#0a0a14;cursor:grab}
-#map-area:active{cursor:grabbing}
-
-/* The MTA map image + canvas overlay */
-#map-container{position:absolute;transform-origin:0 0;will-change:transform}
-#mta-img{display:block;user-select:none;-webkit-user-drag:none}
-#overlay{position:absolute;top:0;left:0;pointer-events:none}
-
-/* zoom controls */
-#zoom-ctrl{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:3px;z-index:30}
-#zoom-ctrl button{width:30px;height:30px;background:#12121f;border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#zoom-ctrl button:hover{background:#1e1e38}
-
-/* tooltip */
-#tip{position:absolute;background:#12121f;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:7px 10px;font-size:11px;pointer-events:none;display:none;z-index:40;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,.6);max-width:160px}
+#map{flex:1;position:relative;overflow:hidden;cursor:grab;background:#060610}
+#map:active{cursor:grabbing}
+canvas{position:absolute;top:0;left:0}
+#zc{position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:3px;z-index:10}
+#zc button{width:30px;height:30px;background:#0e0e1e;border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;border-radius:5px;cursor:pointer}
+#zc button:hover{background:#1a1a30}
+#tip{position:absolute;background:#0e0e1e;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:7px 10px;font-size:11px;pointer-events:none;display:none;z-index:20;line-height:1.8;box-shadow:0 4px 16px rgba(0,0,0,.7);max-width:165px}
 #tip strong{display:block;font-size:13px;margin-bottom:1px}
-
-/* sidebar */
-#sidebar{width:190px;background:#0e0e1e;border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;flex-shrink:0;padding:10px}
-#sidebar h3{font-size:9px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
-.acard{background:#181828;border-left:3px solid #fb923c;border-radius:3px;padding:7px 8px;margin-bottom:5px;font-size:10px}
-.acard.sev{border-left-color:#f87171}
-.acard .al{font-weight:700;color:#fb923c;margin-bottom:2px}
-.acard.sev .al{color:#f87171}
-.acard .am{color:#999;line-height:1.4}
+#sb{width:185px;background:#0a0a1a;border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;flex-shrink:0;padding:10px}
+#sb h3{font-size:9px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.ac{background:#141424;border-left:3px solid #fb923c;border-radius:3px;padding:7px 8px;margin-bottom:5px;font-size:10px}
+.ac.sv{border-left-color:#f87171}
+.ac .al{font-weight:700;color:#fb923c;margin-bottom:2px}
+.ac.sv .al{color:#f87171}
+.ac .am{color:#888;line-height:1.4}
 .leg{margin-top:12px}
-.lr{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:10px;color:#bbb}
+.lr{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:10px;color:#aaa}
 .ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-hr.lsep{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:7px 0}
-
-/* ticker */
-#ticker{height:26px;background:#080810;border-top:1px solid rgba(255,255,255,0.05);overflow:hidden;font-size:10px;color:#555;white-space:nowrap;display:flex;align-items:center}
-#ticker-inner{display:inline-block;padding-left:100%;animation:tick 45s linear infinite}
-@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+hr.ls{border:none;border-top:1px solid rgba(255,255,255,0.06);margin:7px 0}
+#tkr{height:26px;background:#04040c;border-top:1px solid rgba(255,255,255,0.05);overflow:hidden;font-size:10px;color:#444;white-space:nowrap;display:flex;align-items:center}
+#ti{display:inline-block;padding-left:100%;animation:tk 50s linear infinite}
+@keyframes tk{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 </style>
 </head>
 <body>
-<div id="header">
-  <h1>🚇 NYC Subway Tracker</h1>
-  <span class="pill live">● LIVE</span>
-  <span class="pill delayed">⚠ 5 DELAYS</span>
-  <button id="refresh-btn" onclick="doRefresh()">↻ Refresh</button>
+<div id="hdr">
+  <h1>&#x1F687; NYC Subway Tracker</h1>
+  <span class="pill live">&#x25CF; LIVE</span>
+  <span class="pill del">&#x26A0; 5 DELAYS</span>
+  <button id="rbtn" onclick="refresh()">&#x21BB; Refresh</button>
   <span id="ts">--</span>
 </div>
 <div id="wrap">
-  <div id="map-area">
-    <div id="map-container">
-      <img id="mta-img" src="https://new.mta.info/map/5256" alt="MTA Subway Map" crossorigin="anonymous"/>
-      <canvas id="overlay"></canvas>
-    </div>
-    <div id="zoom-ctrl">
-      <button onclick="zoomBy(1.3)">+</button>
-      <button onclick="resetView()" title="Reset">⌂</button>
-      <button onclick="zoomBy(1/1.3)">−</button>
+  <div id="map">
+    <canvas id="c"></canvas>
+    <div id="zc">
+      <button onclick="zBy(1.3)">+</button>
+      <button onclick="reset()" title="Reset">&#x2302;</button>
+      <button onclick="zBy(1/1.3)">&#x2212;</button>
     </div>
     <div id="tip"></div>
   </div>
-  <div id="sidebar">
+  <div id="sb">
     <h3>Service Alerts</h3>
-    <div class="acard sev"><div class="al">🔴 Line 5</div><div class="am">No service Bowling Green–Flatbush Av. Signal problems at 14 St.</div></div>
-    <div class="acard"><div class="al">⚠️ Line C</div><div class="am">Delays up to 10 min. Track work at Spring St.</div></div>
-    <div class="acard"><div class="al">⚠️ Line F</div><div class="am">Residual delays at 34 St–Herald Sq.</div></div>
-    <div class="acard"><div class="al">⚠️ Line N</div><div class="am">Skip-stop service DeKalb–Times Sq.</div></div>
-    <div class="acard"><div class="al">⚠️ Line 2</div><div class="am">8 min delays near Atlantic Av.</div></div>
+    <div class="ac sv"><div class="al">&#x1F534; Line 5</div><div class="am">No service Bowling Green&#x2013;Flatbush Av. Signal problems at 14 St.</div></div>
+    <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line C</div><div class="am">Delays up to 10 min. Track work at Spring St.</div></div>
+    <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line F</div><div class="am">Residual delays at 34 St&#x2013;Herald Sq.</div></div>
+    <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line N</div><div class="am">Skip-stop service DeKalb&#x2013;Times Sq.</div></div>
+    <div class="ac"><div class="al">&#x26A0;&#xFE0F; Line 2</div><div class="am">8 min delays near Atlantic Av.</div></div>
     <div class="leg">
       <h3 style="margin-top:0">Lines</h3>
-      <div class="lr"><div class="ld" style="background:#EE352E"></div>1 · 2 · 3</div>
-      <div class="lr"><div class="ld" style="background:#00933C"></div>4 · 5 · 6</div>
+      <div class="lr"><div class="ld" style="background:#EE352E"></div>1 &middot; 2 &middot; 3</div>
+      <div class="lr"><div class="ld" style="background:#00933C"></div>4 &middot; 5 &middot; 6</div>
       <div class="lr"><div class="ld" style="background:#B933AD"></div>7</div>
-      <div class="lr"><div class="ld" style="background:#0039A6"></div>A · C · E</div>
-      <div class="lr"><div class="ld" style="background:#FF6319"></div>B · D · F · M</div>
+      <div class="lr"><div class="ld" style="background:#0039A6"></div>A &middot; C &middot; E</div>
+      <div class="lr"><div class="ld" style="background:#FF6319"></div>B &middot; D &middot; F &middot; M</div>
       <div class="lr"><div class="ld" style="background:#6CBE45"></div>G</div>
-      <div class="lr"><div class="ld" style="background:#996633"></div>J · Z</div>
-      <div class="lr"><div class="ld" style="background:#FCCC0A"></div>N · Q · R · W</div>
+      <div class="lr"><div class="ld" style="background:#996633"></div>J &middot; Z</div>
+      <div class="lr"><div class="ld" style="background:#FCCC0A"></div>N &middot; Q &middot; R &middot; W</div>
       <div class="lr"><div class="ld" style="background:#A7A9AC"></div>L</div>
-      <hr class="lsep"/>
+      <hr class="ls"/>
       <div class="lr"><div class="ld" style="background:#fb923c;outline:2px solid rgba(255,255,255,.3);outline-offset:1px"></div>Delayed</div>
       <div class="lr"><div class="ld" style="background:#f87171;outline:2px solid rgba(255,255,255,.3);outline-offset:1px"></div>Severe delay</div>
     </div>
   </div>
 </div>
-<div id="ticker"><span id="ticker-inner">🔴 Line 5: No service Bowling Green–Flatbush Av &nbsp;•&nbsp; ⚠️ Line C: Delays at Spring St &nbsp;•&nbsp; ⚠️ Line F: Residual delays at 34 St &nbsp;•&nbsp; ⚠️ Line N: Skip-stop DeKalb–Times Sq &nbsp;•&nbsp; ⚠️ Line 2: 8 min delays Atlantic Av</span></div>
-
+<div id="tkr"><span id="ti">&#x1F534; Line 5: No service Bowling Green&#x2013;Flatbush Av &nbsp;&bull;&nbsp; &#x26A0;&#xFE0F; Line C: Delays at Spring St &nbsp;&bull;&nbsp; &#x26A0;&#xFE0F; Line F: Residual delays &nbsp;&bull;&nbsp; &#x26A0;&#xFE0F; Line N: Skip-stop DeKalb&#x2013;Times Sq &nbsp;&bull;&nbsp; &#x26A0;&#xFE0F; Line 2: 8 min delays Atlantic Av</span></div>
 <script>
+const S={"van_cortlandt":[220,60,"Van Cortlandt Pk"],"s238":[220,95,"238 St"],"s231":[220,128,"231 St"],"marble_hill":[220,161,"Marble Hill"],"s215":[220,194,"215 St"],"s207":[220,227,"207 St"],"dyckman":[220,260,"Dyckman St"],"s191":[220,293,"191 St"],"s181":[220,326,"181 St"],"s168_1":[220,359,"168 St"],"s157":[220,392,"157 St"],"s145_1":[220,428,"145 St"],"s137":[220,461,"137 St"],"s125_1":[220,497,"125 St"],"s116_1":[220,530,"116 St"],"s110_1":[220,563,"110 St"],"s103_1":[220,596,"103 St"],"s96_1":[220,629,"96 St"],"s86_1":[220,662,"86 St"],"s79":[220,695,"79 St"],"s72_1":[220,728,"72 St"],"s66":[220,761,"66 St"],"s59_col":[220,797,"59 St-Col Circle"],"s50_1":[220,830,"50 St"],"times_sq":[350,866,"Times Sq-42 St"],"s34_penn":[220,902,"34 St-Penn"],"s28_1":[220,935,"28 St"],"s23_1":[220,968,"23 St"],"s18":[220,1001,"18 St"],"s14_1":[220,1034,"14 St"],"christopher":[220,1067,"Christopher St"],"houston_1":[220,1100,"Houston St"],"canal_1":[220,1133,"Canal St"],"franklin":[220,1166,"Franklin St"],"chambers_1":[220,1199,"Chambers St"],"cortlandt_1":[220,1232,"Cortlandt St"],"rector":[220,1265,"Rector St"],"south_ferry":[220,1298,"South Ferry"],"woodlawn":[560,60,"Woodlawn"],"mosholu":[560,95,"Mosholu Pkwy"],"bedpark_4":[560,128,"Bedford Pk Blvd"],"kings_4":[560,161,"Kingsbridge Rd"],"fordham_4":[560,194,"Fordham Rd"],"burnside":[560,227,"Burnside Av"],"s183_4":[560,260,"183 St"],"tremont_4":[560,293,"Tremont Av"],"s174_4":[560,326,"174-175 Sts"],"s170_4":[560,359,"170 St"],"s167_4":[560,392,"167 St"],"yankee":[470,428,"161 St-Yankee Stadium"],"s149_gc":[470,461,"149 St-Grand Concourse"],"s138_gc":[470,497,"138 St-Grand Concourse"],"s125_4":[560,530,"125 St"],"s116_4":[560,563,"116 St"],"s110_4":[560,596,"110 St"],"s103_4":[560,629,"103 St"],"s96_4":[560,662,"96 St"],"s86_4":[560,695,"86 St"],"s77":[560,728,"77 St"],"s68":[560,761,"68 St-Hunter"],"s59_lex":[560,797,"59 St"],"s51":[560,830,"51 St"],"grand_central":[560,866,"Grand Central-42 St"],"s33_4":[560,902,"33 St"],"s28_4":[560,935,"28 St"],"s23_4":[560,968,"23 St"],"union_sq":[560,1001,"14 St-Union Sq"],"astor":[560,1034,"Astor Pl"],"bleecker":[560,1067,"Bleecker St"],"spring_6":[560,1100,"Spring St"],"canal_6":[560,1133,"Canal St"],"bklyn_bridge":[560,1166,"Brooklyn Bridge"],"fulton_456":[560,1199,"Fulton St"],"wall":[560,1232,"Wall St"],"bowling":[560,1265,"Bowling Green"],"boro_hall":[560,1310,"Borough Hall"],"nevins":[530,1350,"Nevins St"],"atlantic":[500,1390,"Atlantic Av-Barclays"],"inwood":[80,227,"Inwood-207 St"],"s190":[80,293,"190 St"],"s168_a":[80,359,"168 St"],"s145_a":[140,428,"145 St"],"s125_a":[140,497,"125 St"],"s116_a":[140,530,"116 St"],"s110_a":[140,563,"110 St"],"s103_a":[140,596,"103 St"],"s96_a":[140,629,"96 St"],"s86_a":[140,662,"86 St"],"s81_a":[140,695,"81 St"],"s72_a":[140,728,"72 St"],"s59_a":[140,797,"59 St-Col Circle"],"s50_a":[140,830,"50 St"],"port_auth":[290,866,"42 St-Port Auth"],"s34_a":[140,902,"34 St-Penn"],"s23_a":[140,935,"23 St"],"s14_a":[140,968,"14 St"],"w4":[140,1001,"W 4 St"],"spring_e":[140,1034,"Spring St"],"canal_a":[140,1067,"Canal St"],"chambers_a":[140,1100,"Chambers St"],"fulton_a":[140,1133,"Fulton St"],"high_st":[140,1199,"High St"],"jay_st":[140,1249,"Jay St-MetroTech"],"hoyt_scher":[140,1310,"Hoyt-Schermerhorn"],"nostrand_a":[200,1360,"Nostrand Av"],"kingston":[260,1395,"Kingston-Throop"],"utica_a":[320,1428,"Utica Av"],"ralph_a":[380,1461,"Ralph Av"],"rockaway_a":[440,1494,"Rockaway Av"],"bway_jct":[500,1527,"Broadway Jct"],"euclid":[560,1560,"Euclid Av"],"grant":[620,1595,"Grant Av"],"s80":[660,1628,"80 St"],"s88":[700,1661,"88 St"],"rockaway_blvd":[740,1694,"Rockaway Blvd"],"s104":[780,1727,"104 St"],"ozone_pk":[820,1760,"Ozone Pk-Lefferts"],"far_rockaway":[900,1930,"Far Rockaway"],"norwood":[390,60,"Norwood-205 St"],"bedpark_b":[390,95,"Bedford Pk Blvd"],"kings_b":[390,128,"Kingsbridge Rd"],"fordham_b":[390,161,"Fordham Rd"],"burnside_b":[390,194,"Burnside Av"],"s183_b":[390,227,"183 St"],"tremont_b":[390,260,"Tremont Av"],"s174_b":[390,293,"174-175 Sts"],"s170_b":[390,326,"170 St"],"s167_b":[390,359,"167 St"],"s155":[420,428,"155 St"],"s145_b":[420,461,"145 St"],"s125_b":[420,497,"125 St"],"s116_b":[420,530,"116 St"],"cathedral":[420,563,"Cathedral-110 St"],"s103_b":[420,596,"103 St"],"s96_b":[420,629,"96 St"],"s81_b":[420,662,"81 St"],"s72_b":[420,695,"72 St"],"s59_b":[350,797,"59 St-Col Circle"],"s47":[350,830,"47-50 Sts"],"s42_b":[350,866,"42 St-Bryant Pk"],"s34_b":[350,902,"34 St-Herald Sq"],"s23_b":[350,935,"23 St"],"s14_b":[350,968,"14 St"],"bway_laf":[390,1001,"Broadway-Lafayette"],"grand_6av":[390,1034,"Grand St"],"essex":[440,1067,"Essex St-Delancey"],"l_8av":[80,1034,"8 Av"],"l_6av":[170,1034,"6 Av"],"l_14":[350,1034,"14 St-Union Sq"],"l_3av":[430,1034,"3 Av"],"l_1av":[480,1034,"1 Av"],"l_bedford":[560,1034,"Bedford Av"],"l_lorimer":[620,1034,"Lorimer St"],"l_graham":[670,1034,"Graham Av"],"l_grand":[720,1034,"Grand St"],"l_montrose":[770,1034,"Montrose Av"],"l_morgan":[820,1034,"Morgan Av"],"l_jefferson":[870,1034,"Jefferson St"],"l_dekalb":[920,1034,"DeKalb Av"],"l_myrtle":[970,1067,"Myrtle-Wyckoff"],"l_halsey":[1020,1100,"Halsey St"],"l_wilson":[1070,1133,"Wilson Av"],"l_bushwick":[1120,1166,"Bushwick Av"],"l_atlantic":[1170,1199,"Atlantic Av"],"l_sutter":[1220,1232,"Sutter Av"],"l_livonia":[1270,1265,"Livonia Av"],"l_newlots":[1320,1298,"New Lots Av"],"l_e105":[1360,1331,"E 105 St"],"canarsie":[1400,1364,"Canarsie"],"flushing":[1350,530,"Flushing-Main St"],"mets":[1290,530,"Mets-Willets Pt"],"jct_blvd":[1220,530,"Junction Blvd"],"s90_e":[1170,563,"90 St-Elmhurst"],"s82_j":[1120,596,"82 St"],"s74":[1070,629,"74 St-Broadway"],"s69":[1020,662,"69 St"],"woodside":[970,695,"Woodside-61 St"],"s52":[920,728,"52 St"],"s46":[870,761,"46 St"],"s40":[820,795,"40 St"],"s33_7":[770,828,"33 St"],"qboro_plz":[720,866,"Queensboro Plaza"],"court_sq":[680,900,"Court Sq"],"hunters_pt":[640,866,"Hunters Point Av"],"s34_hud":[350,902,"34 St-Hudson Yards"],"g_court":[680,900,"Court Sq"],"g_21":[680,935,"21 St"],"g_greenpt":[680,968,"Greenpoint Av"],"g_nassau":[680,1001,"Nassau Av"],"g_metro":[680,1034,"Metropolitan Av"],"g_bway":[680,1067,"Broadway"],"g_flushing":[680,1100,"Flushing Av"],"g_myrtle_w":[680,1133,"Myrtle-Willoughby"],"g_bedford":[680,1166,"Bedford-Nostrand"],"g_classon":[680,1199,"Classon Av"],"g_clinton":[680,1232,"Clinton-Wash Avs"],"g_fulton":[680,1265,"Fulton St"],"g_hoyt":[680,1298,"Hoyt-Schermerhorn"],"g_bergen":[620,1338,"Bergen St"],"g_carroll":[580,1370,"Carroll St"],"g_smith":[540,1403,"Smith-9 Sts"],"g_4av":[500,1436,"4 Av-9 St"],"g_7av":[450,1469,"7 Av"],"g_15":[400,1502,"15 St-Prospect Pk"],"g_fort":[350,1535,"Fort Hamilton Pkwy"],"g_church":[300,1568,"Church Av"],"ditmars":[760,530,"Astoria-Ditmars Blvd"],"astoria_blvd":[760,563,"Astoria Blvd"],"s30av":[760,596,"30 Av"],"bway_ast":[760,629,"Broadway"],"s36av":[760,662,"36 Av"],"s39av":[760,695,"39 Av"],"qboro_nrw":[720,728,"Queensboro Plaza"],"jamaica_e":[1350,866,"Jamaica Center"],"jamaica_van":[1290,866,"Jamaica-Van Wyck"],"briarwood":[1230,866,"Briarwood"],"kew_grd":[1170,866,"Kew Gardens-Union Tpke"],"forest_hills":[1110,866,"Forest Hills-71 Av"],"s75av":[1060,866,"75 Av"],"woodhaven":[1010,866,"Woodhaven Blvd"],"s63dr":[960,866,"63 Dr"],"s67av":[910,866,"67 Av"],"jkson_hts":[860,900,"Jackson Hts-Roosevelt"],"atlantic_nqr":[500,1390,"Atlantic Av-Barclays"],"union_st":[460,1423,"Union St"],"s4av9":[420,1456,"4 Av-9 St"],"prospect_av":[380,1489,"Prospect Av"],"s25st":[340,1522,"25 St"],"s36st":[300,1555,"36 St"],"s45st":[260,1588,"45 St"],"s53st":[220,1621,"53 St"],"s59bay":[180,1654,"59 St"],"bay_ridge_av":[140,1687,"Bay Ridge Av"],"s77st":[100,1720,"77 St"],"s86st_r":[60,1753,"86 St"],"s95st":[20,1786,"Bay Ridge-95 St"],"s7av_bq":[450,1440,"7 Av"],"prospect_pk":[400,1470,"Prospect Pk"],"church_bq":[350,1500,"Church Av"],"beverley":[300,1530,"Beverley Rd"],"cortelyou":[250,1560,"Cortelyou Rd"],"newkirk":[200,1590,"Newkirk Av"],"av_h":[150,1620,"Avenue H"],"av_j":[100,1650,"Avenue J"],"av_m":[50,1680,"Avenue M"],"kings_hwy":[50,1720,"Kings Hwy"],"av_u":[50,1760,"Avenue U"],"neck_rd":[50,1800,"Neck Rd"],"sheepshead":[50,1840,"Sheepshead Bay"],"brighton":[50,1880,"Brighton Beach"],"ocean_pkwy":[100,1920,"Ocean Pkwy"],"w8_st":[150,1950,"W 8 St-Aquarium"],"coney_island":[250,1990,"Coney Island-Stillwell Av"],"j_jamaica":[1350,866,"Jamaica Center"],"j_sutphin":[1290,900,"Sutphin Blvd"],"j_121":[1230,935,"121 St"],"j_111":[1170,968,"111 St"],"j_cypress":[1110,1001,"Cypress Hills"],"j_norwood":[1050,1034,"Norwood Av"],"j_cleveland":[990,1067,"Cleveland St"],"j_crescent":[930,1100,"Crescent St"],"j_75":[870,1133,"75 St-Elderts Lane"],"j_van_siclen":[810,1166,"Van Siclen Av"],"j_alabama":[750,1199,"Alabama Av"],"j_bway_jct":[690,1232,"Broadway Jct"],"j_chauncey":[630,1265,"Chauncey St"],"j_halsey":[570,1298,"Halsey St"],"j_gates":[510,1331,"Gates Av"],"j_myrtle":[450,1364,"Myrtle-Broadway"],"j_marcy":[390,1397,"Marcy Av"],"j_hewes":[390,1430,"Hewes St"],"j_lorimer":[390,1463,"Lorimer St"],"j_metro":[390,1496,"Metropolitan Av"],"j_essex":[440,1067,"Essex St"]};
+const ROUTES={"1":["van_cortlandt","s238","s231","marble_hill","s215","s207","dyckman","s191","s181","s168_1","s157","s145_1","s137","s125_1","s116_1","s110_1","s103_1","s96_1","s86_1","s79","s72_1","s66","s59_col","s50_1","times_sq","s34_penn","s28_1","s23_1","s18","s14_1","christopher","houston_1","canal_1","franklin","chambers_1","cortlandt_1","rector","south_ferry"],"2":["van_cortlandt","s125_1","s96_1","s72_1","times_sq","s34_penn","union_sq","fulton_456","nevins","atlantic"],"3":["s125_1","s96_1","times_sq","s14_1","chambers_1","fulton_456","nevins","atlantic"],"4":["woodlawn","mosholu","bedpark_4","kings_4","fordham_4","burnside","s183_4","tremont_4","s174_4","s170_4","s167_4","yankee","s149_gc","s138_gc","s125_4","s116_4","s110_4","s103_4","s96_4","s86_4","s77","s68","s59_lex","s51","grand_central","s33_4","s28_4","s23_4","union_sq","astor","bleecker","spring_6","canal_6","bklyn_bridge","fulton_456","wall","bowling","boro_hall","nevins","atlantic"],"5":["s138_gc","s125_4","grand_central","union_sq","bklyn_bridge","fulton_456","wall","bowling","boro_hall","nevins","atlantic"],"6":["s125_4","s116_4","s110_4","s103_4","s96_4","s86_4","s77","s68","s59_lex","s51","grand_central","s33_4","s28_4","s23_4","union_sq","astor","bleecker","spring_6","canal_6","bklyn_bridge"],"7":["flushing","mets","jct_blvd","s90_e","s82_j","s74","s69","woodside","s52","s46","s40","s33_7","qboro_plz","court_sq","hunters_pt","times_sq","s34_hud"],"A":["inwood","s207","s181","s168_a","s145_a","s125_a","s116_a","s110_a","s103_a","s96_a","s86_a","s81_a","s72_a","s59_a","s50_a","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a","high_st","jay_st","hoyt_scher","nostrand_a","kingston","utica_a","ralph_a","rockaway_a","bway_jct","euclid","grant","s80","s88","rockaway_blvd","s104","ozone_pk","far_rockaway"],"C":["s168_a","s145_a","s125_a","s116_a","s110_a","s103_a","s96_a","s86_a","s81_a","s72_a","s59_a","s50_a","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a","high_st","jay_st","hoyt_scher","nostrand_a","utica_a","euclid"],"E":["jamaica_e","jamaica_van","briarwood","kew_grd","forest_hills","jkson_hts","court_sq","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a"],"B":["norwood","bedpark_b","kings_b","fordham_b","burnside_b","s183_b","tremont_b","s174_b","s170_b","s167_b","yankee","s155","s145_b","s125_b","s116_b","cathedral","s103_b","s96_b","s81_b","s72_b","s59_b","s47","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","grand_6av","atlantic","s7av_bq","prospect_pk","church_bq","beverley","newkirk","av_m","kings_hwy","av_u","neck_rd","sheepshead","brighton","ocean_pkwy","coney_island"],"D":["norwood","bedpark_b","kings_b","fordham_b","burnside_b","s183_b","tremont_b","s174_b","s170_b","s167_b","yankee","s155","s145_b","s125_b","s59_b","s47","s42_b","s34_b","s14_b","w4","bway_laf","atlantic","s7av_bq","prospect_pk","church_bq","s36st","coney_island"],"F":["jamaica_e","kew_grd","forest_hills","s75av","jkson_hts","court_sq","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","essex","jay_st","g_smith","g_4av","g_church","av_m","kings_hwy","av_u","sheepshead","w8_st","coney_island"],"M":["forest_hills","s75av","woodhaven","s63dr","s67av","jkson_hts","court_sq","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","essex","l_myrtle","j_metro"],"G":["g_court","g_21","g_greenpt","g_nassau","g_metro","g_bway","g_flushing","g_myrtle_w","g_bedford","g_classon","g_clinton","g_fulton","g_hoyt","g_bergen","g_carroll","g_smith","g_4av","g_7av","g_15","g_fort","g_church"],"J":["j_jamaica","j_sutphin","j_121","j_111","j_cypress","j_norwood","j_cleveland","j_crescent","j_75","j_van_siclen","j_alabama","j_bway_jct","j_chauncey","j_halsey","j_gates","j_myrtle","j_marcy","j_hewes","j_lorimer","j_metro","j_essex","chambers_a","fulton_a"],"L":["l_8av","l_6av","l_14","l_3av","l_1av","l_bedford","l_lorimer","l_graham","l_grand","l_montrose","l_morgan","l_jefferson","l_dekalb","l_myrtle","l_halsey","l_wilson","l_bushwick","l_atlantic","l_sutter","l_livonia","l_newlots","l_e105","canarsie"],"N":["ditmars","astoria_blvd","s30av","bway_ast","s36av","s39av","qboro_nrw","s59_lex","s47","s42_b","s34_b","union_sq","canal_6","bklyn_bridge","fulton_a","jay_st","atlantic_nqr","union_st","s4av9","prospect_av","s25st","s36st","s45st","s53st","s59bay","bay_ridge_av","s77st","s86st_r","s95st"],"Q":["s96_b","s47","s42_b","s34_b","union_sq","canal_6","bklyn_bridge","jay_st","atlantic_nqr","s7av_bq","prospect_pk","church_bq","beverley","newkirk","av_h","av_j","av_m","kings_hwy","av_u","sheepshead","brighton","w8_st","coney_island"],"R":["ditmars","s39av","qboro_nrw","s59_lex","s47","s34_b","s23_4","union_sq","canal_6","bklyn_bridge","jay_st","atlantic_nqr","union_st","s4av9","prospect_av","s25st","s36st","s45st","s53st","s59bay","bay_ridge_av","s77st","s86st_r","s95st"]};
+const TRAINS=[{"line":"1","color":"#EE352E","route":["van_cortlandt","s238","s231","marble_hill","s215","s207","dyckman","s191","s181","s168_1","s157","s145_1","s137","s125_1","s116_1","s110_1","s103_1","s96_1","s86_1","s79","s72_1","s66","s59_col","s50_1","times_sq","s34_penn","s28_1","s23_1","s18","s14_1","christopher","houston_1","canal_1","franklin","chambers_1","cortlandt_1","rector","south_ferry"],"segIdx":7,"progress":0.025,"direction":1,"delay":0},{"line":"2","color":"#EE352E","route":["van_cortlandt","s125_1","s96_1","s72_1","times_sq","s34_penn","union_sq","fulton_456","nevins","atlantic"],"segIdx":4,"progress":0.245,"direction":1,"delay":0},{"line":"3","color":"#EE352E","route":["s125_1","s96_1","times_sq","s14_1","chambers_1","fulton_456","nevins","atlantic"],"segIdx":5,"progress":0.102,"direction":1,"delay":0},{"line":"4","color":"#00933C","route":["woodlawn","mosholu","bedpark_4","kings_4","fordham_4","burnside","s183_4","tremont_4","s174_4","s170_4","s167_4","yankee","s149_gc","s138_gc","s125_4","s116_4","s110_4","s103_4","s96_4","s86_4","s77","s68","s59_lex","s51","grand_central","s33_4","s28_4","s23_4","union_sq","astor","bleecker","spring_6","canal_6","bklyn_bridge","fulton_456","wall","bowling","boro_hall","nevins","atlantic"],"segIdx":34,"progress":0.087,"direction":1,"delay":0},{"line":"5","color":"#00933C","route":["s138_gc","s125_4","grand_central","union_sq","bklyn_bridge","fulton_456","wall","bowling","boro_hall","nevins","atlantic"],"segIdx":6,"progress":0.032,"direction":1,"delay":0},{"line":"6","color":"#00933C","route":["s125_4","s116_4","s110_4","s103_4","s96_4","s86_4","s77","s68","s59_lex","s51","grand_central","s33_4","s28_4","s23_4","union_sq","astor","bleecker","spring_6","canal_6","bklyn_bridge"],"segIdx":6,"progress":0.233,"direction":1,"delay":0},{"line":"7","color":"#B933AD","route":["flushing","mets","jct_blvd","s90_e","s82_j","s74","s69","woodside","s52","s46","s40","s33_7","qboro_plz","court_sq","hunters_pt","times_sq","s34_hud"],"segIdx":0,"progress":0.561,"direction":1,"delay":0},{"line":"A","color":"#0039A6","route":["inwood","s207","s181","s168_a","s145_a","s125_a","s116_a","s110_a","s103_a","s96_a","s86_a","s81_a","s72_a","s59_a","s50_a","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a","high_st","jay_st","hoyt_scher","nostrand_a","kingston","utica_a","ralph_a","rockaway_a","bway_jct","euclid","grant","s80","s88","rockaway_blvd","s104","ozone_pk","far_rockaway"],"segIdx":34,"progress":0.42,"direction":1,"delay":0},{"line":"C","color":"#0039A6","route":["s168_a","s145_a","s125_a","s116_a","s110_a","s103_a","s96_a","s86_a","s81_a","s72_a","s59_a","s50_a","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a","high_st","jay_st","hoyt_scher","nostrand_a","utica_a","euclid"],"segIdx":14,"progress":0.589,"direction":1,"delay":0},{"line":"E","color":"#0039A6","route":["jamaica_e","jamaica_van","briarwood","kew_grd","forest_hills","jkson_hts","court_sq","port_auth","s34_a","s23_a","s14_a","w4","spring_e","canal_a","chambers_a","fulton_a"],"segIdx":12,"progress":0.806,"direction":1,"delay":0},{"line":"B","color":"#FF6319","route":["norwood","bedpark_b","kings_b","fordham_b","burnside_b","s183_b","tremont_b","s174_b","s170_b","s167_b","yankee","s155","s145_b","s125_b","s116_b","cathedral","s103_b","s96_b","s81_b","s72_b","s59_b","s47","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","grand_6av","atlantic","s7av_bq","prospect_pk","church_bq","beverley","newkirk","av_m","kings_hwy","av_u","neck_rd","sheepshead","brighton","ocean_pkwy","coney_island"],"segIdx":27,"progress":0.34,"direction":1,"delay":0},{"line":"D","color":"#FF6319","route":["norwood","bedpark_b","kings_b","fordham_b","burnside_b","s183_b","tremont_b","s174_b","s170_b","s167_b","yankee","s155","s145_b","s125_b","s59_b","s47","s42_b","s34_b","s14_b","w4","bway_laf","atlantic","s7av_bq","prospect_pk","church_bq","s36st","coney_island"],"segIdx":4,"progress":0.215,"direction":1,"delay":0},{"line":"F","color":"#FF6319","route":["jamaica_e","kew_grd","forest_hills","s75av","jkson_hts","court_sq","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","essex","jay_st","g_smith","g_4av","g_church","av_m","kings_hwy","av_u","sheepshead","w8_st","coney_island"],"segIdx":10,"progress":0.102,"direction":1,"delay":8},{"line":"M","color":"#FF6319","route":["forest_hills","s75av","woodhaven","s63dr","s67av","jkson_hts","court_sq","s42_b","s34_b","s23_b","s14_b","w4","bway_laf","essex","l_myrtle","j_metro"],"segIdx":1,"progress":0.359,"direction":1,"delay":0},{"line":"G","color":"#6CBE45","route":["g_court","g_21","g_greenpt","g_nassau","g_metro","g_bway","g_flushing","g_myrtle_w","g_bedford","g_classon","g_clinton","g_fulton","g_hoyt","g_bergen","g_carroll","g_smith","g_4av","g_7av","g_15","g_fort","g_church"],"segIdx":11,"progress":0.604,"direction":1,"delay":0},{"line":"J","color":"#996633","route":["j_jamaica","j_sutphin","j_121","j_111","j_cypress","j_norwood","j_cleveland","j_crescent","j_75","j_van_siclen","j_alabama","j_bway_jct","j_chauncey","j_halsey","j_gates","j_myrtle","j_marcy","j_hewes","j_lorimer","j_metro","j_essex","chambers_a","fulton_a"],"segIdx":1,"progress":0.73,"direction":1,"delay":0},{"line":"L","color":"#A7A9AC","route":["l_8av","l_6av","l_14","l_3av","l_1av","l_bedford","l_lorimer","l_graham","l_grand","l_montrose","l_morgan","l_jefferson","l_dekalb","l_myrtle","l_halsey","l_wilson","l_bushwick","l_atlantic","l_sutter","l_livonia","l_newlots","l_e105","canarsie"],"segIdx":17,"progress":0.125,"direction":1,"delay":0},{"line":"N","color":"#FCCC0A","route":["ditmars","astoria_blvd","s30av","bway_ast","s36av","s39av","qboro_nrw","s59_lex","s47","s42_b","s34_b","union_sq","canal_6","bklyn_bridge","fulton_a","jay_st","atlantic_nqr","union_st","s4av9","prospect_av","s25st","s36st","s45st","s53st","s59bay","bay_ridge_av","s77st","s86st_r","s95st"],"segIdx":12,"progress":0.079,"direction":1,"delay":3},{"line":"Q","color":"#FCCC0A","route":["s96_b","s47","s42_b","s34_b","union_sq","canal_6","bklyn_bridge","jay_st","atlantic_nqr","s7av_bq","prospect_pk","church_bq","beverley","newkirk","av_h","av_j","av_m","kings_hwy","av_u","sheepshead","brighton","w8_st","coney_island"],"segIdx":20,"progress":0.619,"direction":1,"delay":0},{"line":"R","color":"#FCCC0A","route":["ditmars","s39av","qboro_nrw","s59_lex","s47","s34_b","s23_4","union_sq","canal_6","bklyn_bridge","jay_st","atlantic_nqr","union_st","s4av9","prospect_av","s25st","s36st","s45st","s53st","s59bay","bay_ridge_av","s77st","s86st_r","s95st"],"segIdx":11,"progress":0.577,"direction":1,"delay":0}];
+const LC={"1":"#EE352E","2":"#EE352E","3":"#EE352E","4":"#00933C","5":"#00933C","6":"#00933C","7":"#B933AD","A":"#0039A6","C":"#0039A6","E":"#0039A6","B":"#FF6319","D":"#FF6319","F":"#FF6319","M":"#FF6319","G":"#6CBE45","J":"#996633","Z":"#996633","N":"#FCCC0A","Q":"#FCCC0A","R":"#FCCC0A","W":"#FCCC0A","L":"#A7A9AC","S":"#808183"};
 
-const STATIONS = {"woodlawn":[820,58,"Woodlawn",["4"]],"mosholu":[820,90,"Mosholu Pkwy",["4"]],"bedford_pk_blvd_lex":[820,122,"Bedford Pk Blvd",["4","D"]],"kingsbridge":[820,155,"Kingsbridge Rd",["4"]],"fordham_rd_lex":[820,188,"Fordham Rd",["4"]],"burnside":[820,222,"Burnside Av",["4"]],"183":[820,258,"183 St",["4"]],"tremont":[820,292,"Tremont Av",["4"]],"174_175":[820,328,"174-175 Sts",["4"]],"170":[820,362,"170 St",["4"]],"167_lex":[820,396,"167 St",["4"]],"161_yankee":[730,432,"161 St-Yankee Stadium",["4","B","D"]],"149_grand_lex":[730,472,"149 St-Grand Concourse",["4","5"]],"138_grand":[730,510,"138 St-Grand Concourse",["4","5"]],"125_lex":[820,548,"125 St",["4","5","6"]],"116_lex":[820,578,"116 St",["6"]],"110_lex":[820,608,"110 St",["6"]],"103_lex":[820,638,"103 St",["6"]],"96_lex":[820,668,"96 St",["6"]],"86_lex":[820,698,"86 St",["6"]],"77_lex":[820,728,"77 St",["6"]],"68_hunter":[820,758,"68 St-Hunter College",["6"]],"59_lex":[820,792,"59 St",["4","5","6","N","R","W"]],"51":[820,828,"51 St",["6"]],"grand_central":[820,862,"Grand Central-42 St",["4","5","6","7","S"]],"33_lex":[820,896,"33 St",["6"]],"28_lex":[820,928,"28 St",["6"]],"23_lex":[820,960,"23 St",["6"]],"14_union_lex":[820,994,"14 St-Union Sq",["4","5","6","L","N","Q","R","W"]],"astor_pl":[820,1028,"Astor Pl",["6"]],"bleecker":[820,1062,"Bleecker St",["6"]],"spring_lex":[820,1098,"Spring St",["6"]],"canal_lex":[820,1132,"Canal St",["6"]],"brooklyn_bridge":[820,1168,"Brooklyn Bridge-City Hall",["4","5","6"]],"fulton_456":[820,1208,"Fulton St",["4","5","6"]],"wall":[820,1244,"Wall St",["4","5"]],"bowling_green":[820,1280,"Bowling Green",["4","5"]],"borough_hall":[820,1320,"Borough Hall",["4","5"]],"nevins":[780,1360,"Nevins St",["2","3","4","5"]],"atlantic_456":[740,1398,"Atlantic Av-Barclays Ctr",["2","3","4","5","B","D","N","Q","R"]],"van_cortlandt":[440,58,"Van Cortlandt Pk-242 St",["1"]],"238":[440,90,"238 St",["1"]],"231":[440,122,"231 St",["1"]],"marble_hill":[440,155,"Marble Hill-225 St",["1"]],"215":[440,188,"215 St",["1"]],"207":[440,222,"207 St",["1","A"]],"dyckman":[440,258,"Dyckman St",["1"]],"191":[440,292,"191 St",["1"]],"181":[440,328,"181 St",["1","A"]],"168_123":[440,362,"168 St",["1","A","C"]],"157":[440,396,"157 St",["1"]],"145_123":[440,432,"145 St",["1","A","B","C","D"]],"137_city":[440,468,"137 St-City College",["1"]],"125_123":[440,505,"125 St",["1","2","3"]],"116_123":[440,540,"116 St-Columbia U",["1"]],"cathedral_110":[440,575,"Cathedral Pkwy-110 St",["1"]],"103_123":[440,610,"103 St",["1"]],"96_123":[440,644,"96 St",["1","2","3"]],"86_123":[440,678,"86 St",["1"]],"79":[440,712,"79 St",["1"]],"72_123":[440,748,"72 St",["1","2","3"]],"66_lincoln":[440,782,"66 St-Lincoln Center",["1"]],"59_columbus":[440,818,"59 St-Columbus Circle",["1","A","B","C","D"]],"50_123":[440,852,"50 St",["1","C","E"]],"times_sq_123":[570,888,"Times Sq-42 St",["1","2","3","7","N","Q","R","W","S"]],"34_penn":[440,924,"34 St-Penn Station",["1","2","3"]],"28_123":[440,958,"28 St",["1"]],"23_123":[440,992,"23 St",["1"]],"18":[440,1026,"18 St",["1"]],"14_123":[440,1060,"14 St",["1","2","3"]],"christopher":[440,1098,"Christopher St-Sheridan Sq",["1"]],"houston_123":[440,1134,"Houston St",["1"]],"canal_123":[440,1168,"Canal St",["1"]],"franklin":[440,1204,"Franklin St",["1"]],"chambers_123":[440,1240,"Chambers St",["1","2","3"]],"cortlandt_123":[440,1276,"Cortlandt St",["1"]],"rector":[440,1310,"Rector St",["1"]],"south_ferry":[440,1348,"South Ferry",["1"]],"inwood_207":[240,222,"Inwood-207 St",["A"]],"190":[240,292,"190 St",["A"]],"168_ace":[240,362,"168 St",["A","C"]],"145_ace":[340,432,"145 St",["A","B","C","D"]],"125_ace":[340,505,"125 St",["A","B","C","D"]],"116_ace":[340,540,"116 St",["A","C"]],"110_ace":[340,575,"110 St",["A","C"]],"103_ace":[340,610,"103 St",["A","C"]],"96_ace":[340,644,"96 St",["A","C"]],"86_ace":[340,678,"86 St",["A","C"]],"81_ace":[340,712,"81 St",["A","C"]],"72_ace":[340,748,"72 St",["A","B","C"]],"59_ace":[340,818,"59 St-Columbus Circle",["A","B","C","D"]],"50_ace":[340,852,"50 St",["C","E"]],"42_port":[460,888,"42 St-Port Authority",["A","C","E"]],"34_ace":[340,924,"34 St-Penn Station",["A","C","E"]],"23_ace":[340,958,"23 St",["C","E"]],"14_ace":[340,992,"14 St",["A","C","E"]],"w4":[340,1028,"W 4 St-Wash Sq",["A","B","C","D","E","F","M"]],"spring_ace":[340,1064,"Spring St",["C","E"]],"canal_ace":[340,1098,"Canal St",["A","C","E"]],"chambers_ace":[340,1134,"Chambers St",["A","C"]],"fulton_ace":[340,1168,"Fulton St",["A","C"]],"high_st":[340,1240,"High St-Brooklyn Bridge",["A","C"]],"jay_st":[340,1290,"Jay St-MetroTech",["A","C","F","R"]],"hoyt_scher":[340,1340,"Hoyt-Schermerhorn",["A","C","G"]],"nostrand_ac":[440,1390,"Nostrand Av",["A","C"]],"kingston_throop":[500,1430,"Kingston-Throop",["C"]],"utica_ac":[560,1468,"Utica Av",["A","C"]],"ralph_ac":[620,1505,"Ralph Av",["A","C"]],"rockaway_ac":[680,1542,"Rockaway Av",["A","C"]],"broadway_jct":[720,1578,"Broadway Jct",["A","C","J","L","Z"]],"euclid":[760,1618,"Euclid Av",["A","C"]],"grant":[800,1658,"Grant Av",["A"]],"80_st":[840,1695,"80 St",["A"]],"88_st":[880,1732,"88 St",["A"]],"rockaway_blvd":[920,1768,"Rockaway Blvd",["A"]],"104_st":[960,1805,"104 St",["A"]],"ozone_pk":[1000,1842,"Ozone Pk-Lefferts",["A"]],"far_rockaway":[1100,2100,"Far Rockaway-Mott Av",["A"]],"jamaica_center":[1380,888,"Jamaica Center",["E","J","Z"]],"jamaica_van":[1340,888,"Jamaica-Van Wyck",["E"]],"briarwood":[1300,888,"Briarwood",["E","F"]],"kew_gardens":[1260,888,"Kew Gardens-Union Tpke",["E","F"]],"forest_hills":[1220,888,"Forest Hills-71 Av",["E","F","M","R"]],"75_av":[1185,888,"75 Av",["F","M"]],"woodhaven":[1150,888,"Woodhaven Blvd",["M","R"]],"63_dr":[1115,888,"63 Dr-Rego Center",["M","R"]],"queens_blvd":[1080,888,"Queens Blvd-67 Av",["M","R"]],"jackson_hts":[1040,820,"Jackson Hts-Roosevelt Av",["E","F","M","R"]],"74_bwy":[1005,820,"74 St-Broadway",["7"]],"queensboro_plz":[970,758,"Queensboro Plaza",["7","N","W"]],"court_sq":[935,820,"Court Sq",["E","G","M"]],"hunters_pt":[900,820,"Hunters Point Av",["7"]],"34_hudson":[570,924,"34 St-Hudson Yards",["7"]],"flushing_main":[1450,758,"Flushing-Main St",["7"]],"mets_willets":[1415,758,"Mets-Willets Point",["7"]],"junction_blvd":[1310,758,"Junction Blvd",["7"]],"90_elmhurst":[1275,758,"90 St-Elmhurst Av",["7"]],"82_jackson":[1240,758,"82 St-Jackson Hts",["7"]],"69_st":[1170,758,"69 St",["7"]],"woodside_61":[1135,758,"Woodside-61 St",["7"]],"52_st":[1100,758,"52 St",["7"]],"46_bliss":[1065,758,"46 St-Bliss St",["7"]],"40_lowery":[1030,758,"40 St-Lowery St",["7"]],"33_rawson":[995,758,"33 St-Rawson St",["7"]],"times_sq_7":[570,888,"Times Sq-42 St",["7"]],"norwood_205":[630,58,"Norwood-205 St",["B","D"]],"bedford_pk_blvd_bd":[630,90,"Bedford Pk Blvd",["B","D"]],"kingsbridge_bd":[630,122,"Kingsbridge Rd",["B","D"]],"fordham_rd_bd":[630,155,"Fordham Rd",["B","D"]],"burnside_bd":[630,188,"Burnside Av",["B","D"]],"183_bd":[630,222,"183 St",["B","D"]],"tremont_bd":[630,258,"Tremont Av",["B","D"]],"174_bd":[630,292,"174-175 Sts",["B","D"]],"170_bd":[630,326,"170 St",["B","D"]],"167_bd":[630,360,"167 St",["B","D"]],"155":[660,430,"155 St",["B","D"]],"145_bd":[660,468,"145 St",["B","D"]],"125_bd":[660,505,"125 St",["A","B","C","D"]],"116_bd":[660,540,"116 St",["B","C"]],"cathedral_bd":[660,575,"Cathedral Pkwy-110 St",["B","C"]],"103_bd":[660,610,"103 St",["B","C"]],"96_bd":[660,644,"96 St",["B","C"]],"81_bd":[660,678,"81 St",["B","C"]],"72_bd":[660,712,"72 St",["B","C"]],"59_bd":[570,818,"59 St-Columbus Circle",["A","B","C","D"]],"47_50":[570,852,"47-50 Sts-Rockefeller Ctr",["B","D","F","M"]],"42_bryant":[570,888,"42 St-Bryant Pk",["B","D","F","M"]],"34_herald":[570,924,"34 St-Herald Sq",["B","D","F","M","N","Q","R","W"]],"23_6av":[570,958,"23 St",["F","M"]],"14_6av":[570,992,"14 St",["F","M"]],"broadway_laf":[620,1028,"Broadway-Lafayette St",["B","D","F","M"]],"grand_st":[620,1064,"Grand St",["B","D"]],"essex_delancey":[680,1098,"Essex St-Delancey St",["F","J","M","Z"]],"2av":[720,992,"2 Av",["F"]],"8av_l":[310,1060,"8 Av",["L"]],"6av_l":[400,1060,"6 Av",["L"]],"14_union_l":[570,1060,"14 St-Union Sq",["L"]],"3av_l":[660,1060,"3 Av",["L"]],"1av_l":[700,1060,"1 Av",["L"]],"bedford_l":[760,1060,"Bedford Av",["L"]],"lorimer_l":[800,1060,"Lorimer St",["L"]],"graham_l":[840,1060,"Graham Av",["L"]],"grand_l":[880,1060,"Grand St",["L"]],"montrose_l":[920,1060,"Montrose Av",["L"]],"morgan_l":[960,1060,"Morgan Av",["L"]],"jefferson_l":[1000,1060,"Jefferson St",["L"]],"dekalb_l":[1040,1060,"DeKalb Av",["L"]],"myrtle_wk_l":[1080,1100,"Myrtle-Wyckoff Avs",["L","M"]],"halsey_l":[1120,1140,"Halsey St",["L"]],"wilson_l":[1160,1180,"Wilson Av",["L"]],"bushwick_l":[1200,1220,"Bushwick Av-Aberdeen",["L"]],"atlantic_l":[1240,1260,"Atlantic Av",["L"]],"sutter_l":[1280,1300,"Sutter Av",["L"]],"livonia_l":[1320,1340,"Livonia Av",["L"]],"new_lots_l":[1360,1380,"New Lots Av",["L"]],"e105_l":[1400,1420,"E 105 St",["L"]],"canarsie_l":[1440,1460,"Canarsie-Rockaway Pkwy",["L"]],"court_sq_g":[935,820,"Court Sq",["G"]],"21_st_g":[935,858,"21 St",["G"]],"greenpoint":[935,898,"Greenpoint Av",["G"]],"nassau_g":[935,938,"Nassau Av",["G"]],"metro_av_g":[935,978,"Metropolitan Av",["G"]],"bway_g":[935,1018,"Broadway",["G","J","M","Z"]],"flushing_g":[935,1058,"Flushing Av",["G"]],"myrtle_willoughby":[935,1098,"Myrtle-Willoughby Avs",["G"]],"bedford_nostrand":[935,1138,"Bedford-Nostrand Avs",["G"]],"classon":[935,1178,"Classon Av",["G"]],"clinton_wash":[935,1218,"Clinton-Washington Avs",["G"]],"fulton_g":[935,1258,"Fulton St",["G"]],"hoyt_scher_g":[935,1298,"Hoyt-Schermerhorn",["G"]],"bergen_g":[880,1338,"Bergen St",["G"]],"carroll_g":[820,1378,"Carroll St",["G"]],"smith_9":[780,1418,"Smith-9 Sts",["G","F","R"]],"4av_9":[740,1458,"4 Av-9 St",["G","F","R"]],"7av_bk":[680,1498,"7 Av",["G"]],"15_prospect":[640,1538,"15 St-Prospect Pk",["G"]],"ft_hamilton_g":[600,1578,"Fort Hamilton Pkwy",["G"]],"church_av_g":[560,1618,"Church Av",["G","B","Q"]],"atlantic_nqrw":[740,1398,"Atlantic Av-Barclays Ctr",["N","Q","R","W"]],"union_st":[700,1438,"Union St",["R"]],"4av_9_r":[660,1478,"4 Av-9 St",["R"]],"prospect_r":[620,1518,"Prospect Av",["R"]],"25_st":[580,1558,"25 St",["R"]],"36_st":[540,1598,"36 St",["D","N","R"]],"45_st":[500,1638,"45 St",["R"]],"53_st":[460,1678,"53 St",["R"]],"59_bay_ridge":[420,1718,"59 St",["R"]],"bay_ridge_av":[380,1758,"Bay Ridge Av",["R"]],"77_st":[340,1798,"77 St",["R"]],"86_st_r":[300,1838,"86 St",["R"]],"95_st":[260,1878,"Bay Ridge-95 St",["R"]],"astoria_ditmars":[1030,620,"Astoria-Ditmars Blvd",["N","W"]],"astoria_blvd":[1030,658,"Astoria Blvd",["N","W"]],"30_av":[1030,698,"30 Av",["N","W"]],"broadway_astoria":[1030,738,"Broadway",["N","W"]],"36_av":[1030,778,"36 Av",["N","W"]],"39_av":[1030,818,"39 Av-Dutch Kills",["N","W"]],"7av_bkq":[680,1460,"7 Av",["B","Q"]],"prospect_pk":[640,1500,"Prospect Pk",["B","Q"]],"church_av_bq":[600,1540,"Church Av",["B","Q"]],"beverley":[560,1580,"Beverley Rd",["B","Q"]],"cortelyou":[520,1620,"Cortelyou Rd",["Q"]],"newkirk":[480,1658,"Newkirk Av",["B","Q"]],"av_h":[440,1698,"Avenue H",["Q"]],"av_j":[400,1738,"Avenue J",["Q"]],"av_m":[360,1778,"Avenue M",["B","Q"]],"kings_hwy":[320,1818,"Kings Hwy",["B","Q"]],"av_u":[280,1858,"Avenue U",["B","Q"]],"neck_rd":[240,1898,"Neck Rd",["B"]],"sheepshead":[200,1938,"Sheepshead Bay",["B","Q"]],"brighton":[160,1978,"Brighton Beach",["B","Q"]],"ocean_pkwy":[120,2018,"Ocean Pkwy",["B","Q"]],"w8":[200,2058,"W 8 St-NY Aquarium",["F","Q"]],"coney_island":[280,2100,"Coney Island-Stillwell Av",["B","D","F","N","Q"]],"jamaica_center_jz":[1380,888,"Jamaica Center",["J","Z"]],"sutphin_jz":[1340,920,"Sutphin Blvd",["J","Z"]],"121_st_jz":[1300,958,"121 St",["J","Z"]],"111_st_jz":[1260,998,"111 St",["J","Z"]],"cypress_jz":[1220,1038,"Cypress Hills",["J","Z"]],"norwood_jz":[1180,1078,"Norwood Av",["J"]],"cleveland_jz":[1140,1118,"Cleveland St",["J"]],"crescent_jz":[1100,1158,"Crescent St",["J","Z"]],"75_elderts":[1060,1198,"75 St-Elderts Lane",["J"]],"van_siclen_jz":[1020,1238,"Van Siclen Av",["J","Z"]],"alabama_jz":[980,1278,"Alabama Av",["J"]],"broadway_jct_jz":[940,1318,"Broadway Jct",["A","C","J","L","Z"]],"chauncey":[900,1358,"Chauncey St",["J","Z"]],"halsey_jz":[860,1398,"Halsey St",["J"]],"gates_jz":[820,1438,"Gates Av",["J"]],"myrtle_bway":[780,1478,"Myrtle-Broadway",["J","M","Z"]],"kosciuszko":[740,1518,"Kosciuszko St",["J"]],"gates_m":[700,1558,"Gates Av",["M"]],"forest_m":[660,1598,"Forest Av",["M"]],"fresh_pond":[620,1638,"Fresh Pond Rd",["M"]],"middle_village":[580,1678,"Middle Village-Metropolitan Av",["M"]]};
-const ROUTES   = {"1":["van_cortlandt","238","231","marble_hill","215","207","dyckman","191","181","168_123","157","145_123","137_city","125_123","116_123","cathedral_110","103_123","96_123","86_123","79","72_123","66_lincoln","59_columbus","50_123","times_sq_123","34_penn","28_123","23_123","18","14_123","christopher","houston_123","canal_123","franklin","chambers_123","cortlandt_123","rector","south_ferry"],"2":["van_cortlandt","96_123","72_123","times_sq_123","34_penn","14_union_lex","fulton_456","nevins","atlantic_456"],"3":["96_123","times_sq_123","14_123","chambers_123","fulton_456","nevins","atlantic_456"],"4":["woodlawn","mosholu","bedford_pk_blvd_lex","kingsbridge","fordham_rd_lex","burnside","183","tremont","174_175","170","167_lex","161_yankee","149_grand_lex","138_grand","125_lex","116_lex","110_lex","103_lex","96_lex","86_lex","77_lex","68_hunter","59_lex","51","grand_central","33_lex","28_lex","23_lex","14_union_lex","astor_pl","bleecker","spring_lex","canal_lex","brooklyn_bridge","fulton_456","wall","bowling_green","borough_hall","nevins","atlantic_456"],"5":["138_grand","125_lex","grand_central","14_union_lex","brooklyn_bridge","fulton_456","bowling_green","borough_hall","nevins","atlantic_456"],"6":["125_lex","116_lex","110_lex","103_lex","96_lex","86_lex","77_lex","68_hunter","59_lex","51","grand_central","33_lex","28_lex","23_lex","14_union_lex","astor_pl","bleecker","spring_lex","canal_lex","brooklyn_bridge"],"7":["flushing_main","mets_willets","junction_blvd","90_elmhurst","82_jackson","74_bwy","69_st","woodside_61","52_st","46_bliss","40_lowery","33_rawson","queensboro_plz","court_sq","hunters_pt","times_sq_7","34_hudson"],"A":["inwood_207","207","181","168_ace","145_ace","125_ace","116_ace","110_ace","103_ace","96_ace","86_ace","81_ace","72_ace","59_ace","50_ace","42_port","34_ace","23_ace","14_ace","w4","spring_ace","canal_ace","chambers_ace","fulton_ace","high_st","jay_st","hoyt_scher","nostrand_ac","kingston_throop","utica_ac","ralph_ac","rockaway_ac","broadway_jct","euclid","grant","80_st","88_st","rockaway_blvd","104_st","ozone_pk","far_rockaway"],"C":["168_ace","145_ace","125_ace","116_ace","110_ace","103_ace","96_ace","86_ace","81_ace","72_ace","59_ace","50_ace","42_port","34_ace","23_ace","14_ace","w4","spring_ace","canal_ace","chambers_ace","fulton_ace","high_st","jay_st","hoyt_scher","nostrand_ac","utica_ac","euclid"],"E":["jamaica_center","jamaica_van","briarwood","kew_gardens","forest_hills","jackson_hts","court_sq","42_port","34_ace","23_ace","14_ace","w4","spring_ace","canal_ace","chambers_ace","fulton_ace"],"B":["norwood_205","bedford_pk_blvd_bd","kingsbridge_bd","fordham_rd_bd","burnside_bd","183_bd","tremont_bd","174_bd","170_bd","167_bd","161_yankee","155","145_bd","125_bd","116_bd","cathedral_bd","103_bd","96_bd","81_bd","72_bd","59_bd","47_50","42_bryant","34_herald","23_6av","14_6av","w4","broadway_laf","grand_st","atlantic_nqrw","7av_bkq","prospect_pk","church_av_bq","beverley","newkirk","av_m","kings_hwy","av_u","neck_rd","sheepshead","brighton","ocean_pkwy","coney_island"],"D":["norwood_205","bedford_pk_blvd_bd","kingsbridge_bd","fordham_rd_bd","burnside_bd","183_bd","tremont_bd","174_bd","170_bd","167_bd","161_yankee","155","145_bd","125_bd","59_bd","47_50","42_bryant","34_herald","14_6av","w4","broadway_laf","atlantic_nqrw","7av_bkq","prospect_pk","church_av_bq","36_st","coney_island"],"F":["jamaica_center","kew_gardens","forest_hills","75_av","jackson_hts","court_sq","42_bryant","34_herald","23_6av","14_6av","w4","broadway_laf","essex_delancey","jay_st","smith_9","4av_9","church_av_g","av_m","kings_hwy","av_u","sheepshead","w8","coney_island"],"M":["forest_hills","75_av","woodhaven","63_dr","queens_blvd","jackson_hts","court_sq","42_bryant","34_herald","23_6av","14_6av","w4","broadway_laf","essex_delancey","myrtle_wk_l","middle_village"],"G":["court_sq_g","21_st_g","greenpoint","nassau_g","metro_av_g","bway_g","flushing_g","myrtle_willoughby","bedford_nostrand","classon","clinton_wash","fulton_g","hoyt_scher_g","bergen_g","carroll_g","smith_9","4av_9","7av_bk","15_prospect","ft_hamilton_g","church_av_g"],"J":["jamaica_center_jz","sutphin_jz","121_st_jz","111_st_jz","cypress_jz","norwood_jz","cleveland_jz","crescent_jz","75_elderts","van_siclen_jz","alabama_jz","broadway_jct_jz","chauncey","halsey_jz","gates_jz","myrtle_bway","essex_delancey","chambers_ace","fulton_ace"],"L":["8av_l","6av_l","14_union_l","3av_l","1av_l","bedford_l","lorimer_l","graham_l","grand_l","montrose_l","morgan_l","jefferson_l","dekalb_l","myrtle_wk_l","halsey_l","wilson_l","bushwick_l","atlantic_l","sutter_l","livonia_l","new_lots_l","e105_l","canarsie_l"],"N":["astoria_ditmars","astoria_blvd","30_av","broadway_astoria","36_av","39_av","queensboro_plz","59_lex","47_50","42_bryant","34_herald","14_union_lex","canal_lex","brooklyn_bridge","fulton_ace","jay_st","atlantic_nqrw","union_st","4av_9_r","prospect_r","25_st","36_st","45_st","53_st","59_bay_ridge","bay_ridge_av","77_st","86_st_r","95_st"],"Q":["96_bd","47_50","42_bryant","34_herald","14_union_lex","canal_lex","brooklyn_bridge","jay_st","atlantic_nqrw","7av_bkq","prospect_pk","church_av_bq","beverley","newkirk","av_h","av_j","av_m","kings_hwy","av_u","sheepshead","brighton","w8","coney_island"],"R":["astoria_ditmars","39_av","queensboro_plz","59_lex","47_50","34_herald","23_lex","14_union_lex","canal_lex","brooklyn_bridge","jay_st","atlantic_nqrw","union_st","4av_9_r","prospect_r","25_st","36_st","45_st","53_st","59_bay_ridge","bay_ridge_av","77_st","86_st_r","95_st"]};
-const TRAINS   = [{"id":"train_1_7","line":"1","color":"#EE352E","route":"1","segIdx":7,"progress":0.025010755222666936,"direction":1,"delay":0,"dest":"Van Cortlandt Pk-242 St"},{"id":"train_2_3","line":"2","color":"#EE352E","route":"2","segIdx":3,"progress":0.1395379285251439,"direction":1,"delay":0,"dest":"Atlantic Av-Barclays Ctr"},{"id":"train_3_4","line":"3","color":"#EE352E","route":"3","segIdx":4,"progress":0.08693883262941615,"direction":1,"delay":0,"dest":"96 St"},{"id":"train_4_1","line":"4","color":"#00933C","route":"4","segIdx":1,"progress":0.09369523986159245,"direction":1,"delay":0,"dest":"Woodlawn"},{"id":"train_5_0","line":"5","color":"#00933C","route":"5","segIdx":0,"progress":0.561245062938613,"direction":1,"delay":12,"dest":"138 St-Grand Concourse"},{"id":"train_6_14","line":"6","color":"#00933C","route":"6","segIdx":14,"progress":0.5892656838759087,"direction":1,"delay":0,"dest":"Brooklyn Bridge-City Hall"},{"id":"train_7_0","line":"7","color":"#B933AD","route":"7","segIdx":0,"progress":0.7588073671297673,"direction":1,"delay":0,"dest":"Flushing-Main St"},{"id":"train_A_27","line":"A","color":"#0039A6","route":"A","segIdx":27,"progress":0.3402505165179919,"direction":1,"delay":0,"dest":"Inwood-207 St"},{"id":"train_C_24","line":"C","color":"#0039A6","route":"C","segIdx":24,"progress":0.33659454511262676,"direction":1,"delay":0,"dest":"168 St"},{"id":"train_E_5","line":"E","color":"#0039A6","route":"E","segIdx":5,"progress":0.8474943663474598,"direction":1,"delay":0,"dest":"Fulton St"},{"id":"train_B_2","line":"B","color":"#FF6319","route":"B","segIdx":2,"progress":0.7297317866938179,"direction":1,"delay":0,"dest":"Coney Island-Stillwell Av"},{"id":"train_D_12","line":"D","color":"#FF6319","route":"D","segIdx":12,"progress":0.07880019807845817,"direction":1,"delay":0,"dest":"Norwood-205 St"},{"id":"train_F_20","line":"F","color":"#FF6319","route":"F","segIdx":20,"progress":0.6185197523642461,"direction":1,"delay":3,"dest":"Coney Island-Stillwell Av"},{"id":"train_M_11","line":"M","color":"#FF6319","route":"M","segIdx":11,"progress":0.06955514882374092,"direction":1,"delay":0,"dest":"Middle Village-Metropolitan Av"},{"id":"train_G_9","line":"G","color":"#6CBE45","route":"G","segIdx":9,"progress":0.9852215206607577,"direction":1,"delay":0,"dest":"Church Av"},{"id":"train_J_3","line":"J","color":"#996633","route":"J","segIdx":3,"progress":0.38012622503916615,"direction":1,"delay":0,"dest":"Jamaica Center"},{"id":"train_L_11","line":"L","color":"#A7A9AC","route":"L","segIdx":11,"progress":0.1626540971560848,"direction":1,"delay":0,"dest":"8 Av"},{"id":"train_N_21","line":"N","color":"#FCCC0A","route":"N","segIdx":21,"progress":0.26697782204911336,"direction":1,"delay":0,"dest":"Bay Ridge-95 St"},{"id":"train_Q_5","line":"Q","color":"#FCCC0A","route":"Q","segIdx":5,"progress":0.534139877029708,"direction":1,"delay":0,"dest":"96 St"},{"id":"train_R_14","line":"R","color":"#FCCC0A","route":"R","segIdx":14,"progress":0.3794554417576478,"direction":1,"delay":0,"dest":"Bay Ridge-95 St"}];
-// Native map image size (MTA publishes at 1755x2618 or similar; we'll detect on load)
-let MAP_W = 1755, MAP_H = 2618;
-// Scale factor: our station coords were mapped at 1584x2376; adjust proportionally
-const COORD_W = 1584, COORD_H = 2376;
+const MAP_W=1450,MAP_H=2050;
+const mapDiv=document.getElementById('map');
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const tip=document.getElementById('tip');
+let W=0,H=0,scale=1,panX=0,panY=0;
 
-const img = document.getElementById('mta-img');
-const canvas = document.getElementById('overlay');
-const ctx = canvas.getContext('2d');
-const container = document.getElementById('map-container');
-const mapArea = document.getElementById('map-area');
-const tip = document.getElementById('tip');
+function toScreen(mx,my){return[mx*scale+panX,my*scale+panY];}
+function toMap(sx,sy){return[(sx-panX)/scale,(sy-panY)/scale];}
 
-let scale = 1, panX = 0, panY = 0;
-let areaW = 0, areaH = 0;
+const LO={'1':[0,0],'2':[-5,0],'3':[5,0],'4':[0,0],'5':[-5,0],'6':[5,0],'7':[0,0],'A':[0,0],'C':[-5,0],'E':[5,0],'B':[0,0],'D':[-5,0],'F':[5,0],'M':[10,0],'G':[0,0],'J':[0,0],'Z':[5,0],'N':[0,0],'Q':[-5,0],'R':[5,0],'W':[10,0],'L':[0,0]};
 
-// Map our hand-coded pixel coords (at COORD_W x COORD_H) → actual image pixels
-function coordToImg(cx, cy) {
-  return [cx * MAP_W / COORD_W, cy * MAP_H / COORD_H];
+function trainPos(t){
+  const fi=t.segIdx,ti=t.segIdx+1;
+  if(!t.route[fi]||!t.route[ti])return null;
+  const fs=S[t.route[fi]],ts=S[t.route[ti]];
+  if(!fs||!ts)return null;
+  const o=LO[t.line]||[0,0];
+  const fx=fs[0]+o[0],fy=fs[1]+o[1],tx=ts[0]+o[0],ty=ts[1]+o[1];
+  const p=t.progress;
+  return toScreen(fx+(tx-fx)*p,fy+(ty-fy)*p);
 }
 
-// Train position: interpolate between two stations
-function trainPos(train) {
-  const route = ROUTES[train.route];
-  if (!route) return null;
-  const fromId = route[train.segIdx];
-  const toId   = route[train.segIdx + 1];
-  if (!fromId || !toId) return null;
-  const fs = STATIONS[fromId], ts = STATIONS[toId];
-  if (!fs || !ts) return null;
-  const [fx, fy] = coordToImg(fs[0], fs[1]);
-  const [tx, ty] = coordToImg(ts[0], ts[1]);
-  const p = train.progress;
-  return [fx + (tx-fx)*p, fy + (ty-fy)*p, fromId, toId];
-}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0f1020';
+  ctx.fillRect(0,0,W,H);
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // lines
+  const lw=Math.max(2.5,Math.min(6,3*scale));
+  for(const[line,route]of Object.entries(ROUTES)){
+    const col=LC[line]||'#888';
+    const o=LO[line]||[0,0];
+    ctx.beginPath();
+    ctx.strokeStyle=col;
+    ctx.lineWidth=lw;
+    ctx.lineJoin='round';
+    ctx.lineCap='round';
+    ctx.globalAlpha=1;
+    let first=true;
+    for(const sid of route){
+      if(!S[sid])continue;
+      const[sx,sy]=toScreen(S[sid][0]+o[0],S[sid][1]+o[1]);
+      if(first){ctx.moveTo(sx,sy);first=false;}else ctx.lineTo(sx,sy);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
 
-  TRAINS.forEach(t => {
-    const pos = trainPos(t);
-    if (!pos) return;
-    const [x, y, fromId, toId] = pos;
+  // stations
+  const sr=Math.max(3,4*scale);
+  for(const[sid,info]of Object.entries(S)){
+    const[sx,sy]=toScreen(info[0],info[1]);
+    if(sx<-20||sy<-20||sx>W+20||sy>H+20)continue;
+    ctx.beginPath();
+    ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.fillStyle='#fff';
+    ctx.fill();
+    ctx.strokeStyle='#222';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
 
-    const delayColor = t.delay > 10 ? '#f87171' : t.delay > 0 ? '#fb923c' : '#fff';
-    const r = 9;
+  // labels when zoomed
+  if(scale>1.6){
+    const fs=Math.min(11,7*scale);
+    ctx.font=fs+'px -apple-system,sans-serif';
+    ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    for(const[sid,info]of Object.entries(S)){
+      const[mx,my,label]=info;
+      const[sx,sy]=toScreen(mx,my);
+      if(sx<-20||sy<-20||sx>W+20||sy>H+20)continue;
+      ctx.textAlign=mx<MAP_W/2?'right':'left';
+      ctx.fillText(label||'',sx+(mx<MAP_W/2?-7:7),sy);
+    }
+  }
 
-    // glow for delayed
-    if (t.delay > 0) {
-      ctx.beginPath();
-      ctx.arc(x, y, r+7, 0, Math.PI*2);
-      ctx.fillStyle = t.delay > 10 ? 'rgba(248,113,113,0.25)' : 'rgba(251,146,60,0.25)';
+  // trains
+  const r=9;
+  TRAINS.forEach(t=>{
+    const pos=trainPos(t);
+    if(!pos)return;
+    const[sx,sy]=pos;
+    if(sx<-25||sy<-25||sx>W+25||sy>H+25)return;
+    const dc=t.delay>10?'#f87171':t.delay>0?'#fb923c':'#fff';
+    if(t.delay>0){
+      ctx.beginPath();ctx.arc(sx,sy,r+7,0,Math.PI*2);
+      ctx.fillStyle=t.delay>10?'rgba(248,113,113,0.25)':'rgba(251,146,60,0.25)';
       ctx.fill();
     }
-
-    // circle
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI*2);
-    ctx.fillStyle = t.color;
-    ctx.fill();
-
-    // ring
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI*2);
-    ctx.strokeStyle = delayColor;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // label
-    ctx.fillStyle = ['N','Q','R','W'].includes(t.line) ? '#111' : '#fff';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(t.line, x, y);
+    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.fillStyle=t.color;ctx.fill();
+    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.strokeStyle=dc;ctx.lineWidth=2.5;ctx.stroke();
+    ctx.fillStyle=['N','Q','R','W'].includes(t.line)?'#111':'#fff';
+    ctx.font='bold 8px sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(t.line,sx,sy);
   });
 }
 
-function applyTransform() {
-  container.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+function resize(){
+  W=mapDiv.clientWidth||window.innerWidth-185;
+  H=mapDiv.clientHeight||window.innerHeight-72;
+  if(W<1)W=800; if(H<1)H=600;
+  canvas.width=W;
+  canvas.height=H;
 }
 
-function resize() {
-  areaW = mapArea.clientWidth;
-  areaH = mapArea.clientHeight;
-  canvas.width  = MAP_W;
-  canvas.height = MAP_H;
-  draw();
+function fitMap(){
+  const sx=W/MAP_W,sy=H/MAP_H;
+  scale=Math.min(sx,sy)*0.9;
+  panX=(W-MAP_W*scale)/2;
+  panY=20*scale;
 }
+function reset(){fitMap();draw();}
 
-function fitMap() {
-  const scaleX = areaW / MAP_W;
-  const scaleY = areaH / MAP_H;
-  scale = Math.min(scaleX, scaleY);
-  panX = (areaW - MAP_W * scale) / 2;
-  panY = 0;
-  applyTransform();
+function zAround(f,cx,cy){
+  const ns=Math.min(15,Math.max(0.2,scale*f));
+  const a=ns/scale;
+  panX=cx-a*(cx-panX);panY=cy-a*(cy-panY);scale=ns;draw();
 }
+function zBy(f){zAround(f,W/2,H/2);}
 
-function zoomAround(factor, cx, cy) {
-  const ns = Math.min(12, Math.max(0.3, scale * factor));
-  const f  = ns / scale;
-  panX = cx - f*(cx - panX);
-  panY = cy - f*(cy - panY);
-  scale = ns;
-  applyTransform();
-}
+let drag=null;
+mapDiv.addEventListener('mousedown',e=>{drag={sx:e.clientX,sy:e.clientY,px:panX,py:panY};});
+window.addEventListener('mousemove',e=>{if(!drag)return;panX=drag.px+(e.clientX-drag.sx);panY=drag.py+(e.clientY-drag.sy);draw();});
+window.addEventListener('mouseup',()=>drag=null);
+mapDiv.addEventListener('wheel',e=>{e.preventDefault();const r=mapDiv.getBoundingClientRect();zAround(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top);},{passive:false});
 
-function zoomBy(f) { zoomAround(f, areaW/2, areaH/2); }
-
-function resetView() {
-  fitMap();
-}
-
-// drag
-let drag = null;
-mapArea.addEventListener('mousedown', e => {
-  drag = {sx: e.clientX, sy: e.clientY, px: panX, py: panY};
-});
-window.addEventListener('mousemove', e => {
-  if (!drag) return;
-  panX = drag.px + (e.clientX - drag.sx);
-  panY = drag.py + (e.clientY - drag.sy);
-  applyTransform();
-});
-window.addEventListener('mouseup', () => drag = null);
-
-// scroll zoom
-mapArea.addEventListener('wheel', e => {
+let lt=null;
+mapDiv.addEventListener('touchstart',e=>{e.preventDefault();lt=Array.from(e.touches).map(t=>({x:t.clientX,y:t.clientY}));},{passive:false});
+mapDiv.addEventListener('touchmove',e=>{
   e.preventDefault();
-  const r = mapArea.getBoundingClientRect();
-  zoomAround(e.deltaY < 0 ? 1.12 : 1/1.12, e.clientX - r.left, e.clientY - r.top);
-}, {passive:false});
-
-// touch
-let lastT = null;
-mapArea.addEventListener('touchstart', e => {
-  e.preventDefault();
-  lastT = Array.from(e.touches).map(t=>({x:t.clientX,y:t.clientY}));
-},{passive:false});
-mapArea.addEventListener('touchmove', e => {
-  e.preventDefault();
-  const cur = Array.from(e.touches).map(t=>({x:t.clientX,y:t.clientY}));
-  if (cur.length===1 && lastT.length===1) {
-    panX += cur[0].x - lastT[0].x;
-    panY += cur[0].y - lastT[0].y;
-    applyTransform();
-  } else if (cur.length===2 && lastT.length===2) {
-    const od = Math.hypot(lastT[1].x-lastT[0].x, lastT[1].y-lastT[0].y);
-    const nd = Math.hypot(cur[1].x-cur[0].x, cur[1].y-cur[0].y);
-    const cx = (cur[0].x+cur[1].x)/2 - mapArea.getBoundingClientRect().left;
-    const cy = (cur[0].y+cur[1].y)/2 - mapArea.getBoundingClientRect().top;
-    zoomAround(nd/od, cx, cy);
+  const cur=Array.from(e.touches).map(t=>({x:t.clientX,y:t.clientY}));
+  if(cur.length===1&&lt&&lt.length===1){panX+=cur[0].x-lt[0].x;panY+=cur[0].y-lt[0].y;draw();}
+  else if(cur.length===2&&lt&&lt.length===2){
+    const od=Math.hypot(lt[1].x-lt[0].x,lt[1].y-lt[0].y);
+    const nd=Math.hypot(cur[1].x-cur[0].x,cur[1].y-cur[0].y);
+    const r=mapDiv.getBoundingClientRect();
+    zAround(nd/od,(cur[0].x+cur[1].x)/2-r.left,(cur[0].y+cur[1].y)/2-r.top);
   }
-  lastT = cur;
+  lt=cur;
 },{passive:false});
 
-// tooltip — convert screen coords back to image coords
-mapArea.addEventListener('mousemove', e => {
-  if (drag) return;
-  const r = mapArea.getBoundingClientRect();
-  const sx = e.clientX - r.left;
-  const sy = e.clientY - r.top;
-  // image coords
-  const ix = (sx - panX) / scale;
-  const iy = (sy - panY) / scale;
-  let found = null, bestD = 20;
-  TRAINS.forEach(t => {
-    const pos = trainPos(t);
-    if (!pos) return;
-    const [tx, ty] = pos;
-    const d = Math.hypot(ix-tx, iy-ty);
-    if (d < bestD) { bestD = d; found = t; }
+mapDiv.addEventListener('mousemove',e=>{
+  if(drag){tip.style.display='none';return;}
+  const r=mapDiv.getBoundingClientRect();
+  const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  let found=null,best=16;
+  TRAINS.forEach(t=>{
+    const pos=trainPos(t);
+    if(!pos)return;
+    const d=Math.hypot(sx-pos[0],sy-pos[1]);
+    if(d<best){best=d;found=t;}
   });
-  if (found) {
-    const route = ROUTES[found.route];
-    const fromName = route && STATIONS[route[found.segIdx]] ? STATIONS[route[found.segIdx]][2] : '';
-    const toName   = route && STATIONS[route[found.segIdx+1]] ? STATIONS[route[found.segIdx+1]][2] : '';
-    const dl = found.delay > 0
-      ? `<span style="color:${found.delay>10?'#f87171':'#fb923c'}">⚠ ${found.delay} min delay</span>`
-      : `<span style="color:#4ade80">✓ On time</span>`;
-    tip.innerHTML = `<strong style="color:${found.color}">Line ${found.line}</strong>
-      Between: ${fromName}<br>→ ${toName}<br>${dl}`;
-    tip.style.display = 'block';
-    tip.style.left = (sx + 14) + 'px';
-    tip.style.top  = (sy - 10) + 'px';
-  } else {
-    tip.style.display = 'none';
-  }
+  if(found){
+    const from=(S[found.route[found.segIdx]]||[])[2]||'?';
+    const to=(S[found.route[found.segIdx+1]]||[])[2]||'?';
+    const dl=found.delay>0
+      ?`<span style="color:${found.delay>10?'#f87171':'#fb923c'}">&#x26A0; ${found.delay} min delay</span>`
+      :'<span style="color:#4ade80">&#x2713; On time</span>';
+    tip.innerHTML=`<strong style="color:${found.color}">Line ${found.line}</strong>Between: ${from}<br>&rarr; ${to}<br>${dl}`;
+    tip.style.display='block';
+    tip.style.left=(sx+14)+'px';
+    tip.style.top=(sy-10)+'px';
+  } else tip.style.display='none';
 });
-mapArea.addEventListener('mouseleave', () => tip.style.display = 'none');
+mapDiv.addEventListener('mouseleave',()=>tip.style.display='none');
 
-// animate trains
-function advanceTrains() {
-  TRAINS.forEach(t => {
-    const route = ROUTES[t.route];
-    if (!route) return;
-    t.progress += 0.015 + Math.random()*0.01;
-    if (t.progress >= 1) {
-      t.progress = 0;
-      t.segIdx += t.direction;
-      if (t.segIdx >= route.length - 1) { t.segIdx = route.length - 2; t.direction = -1; }
-      if (t.segIdx < 0)                 { t.segIdx = 0;                t.direction =  1; }
+function advance(){
+  TRAINS.forEach(t=>{
+    t.progress+=0.018+Math.random()*0.008;
+    if(t.progress>=1){
+      t.progress=0;t.segIdx+=t.direction;
+      if(t.segIdx>=t.route.length-1){t.segIdx=t.route.length-2;t.direction=-1;}
+      if(t.segIdx<0){t.segIdx=0;t.direction=1;}
     }
   });
   draw();
 }
-
-function doRefresh() {
-  advanceTrains();
-  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
-}
-
-img.onload = () => {
-  MAP_W = img.naturalWidth  || 1755;
-  MAP_H = img.naturalHeight || 2618;
-  img.style.width  = MAP_W + 'px';
-  img.style.height = MAP_H + 'px';
-  resize();
-  fitMap();
-  draw();
-};
-img.onerror = () => {
-  // fallback if MTA image blocked: show a dark placeholder with text
-  img.style.display = 'none';
-  container.style.background = '#0d1117';
-  container.style.width  = MAP_W + 'px';
-  container.style.height = MAP_H + 'px';
-  const msg = document.createElement('div');
-  msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#333;font-size:13px;text-align:center;line-height:2';
-  msg.innerHTML = 'MTA map image could not load<br><small>Train overlays still work below</small>';
-  container.appendChild(msg);
-  resize();
-  fitMap();
-  draw();
-};
-
-window.addEventListener('resize', () => { resize(); fitMap(); });
-document.getElementById('ts').textContent = new Date().toLocaleTimeString();
-setInterval(advanceTrains, 800);
+function refresh(){advance();document.getElementById('ts').textContent=new Date().toLocaleTimeString();}
+window.addEventListener('resize',()=>{resize();fitMap();draw();});
+// Boot: wait for layout to settle before drawing
+setTimeout(()=>{resize();fitMap();draw();},50);
+document.getElementById('ts').textContent=new Date().toLocaleTimeString();
+setInterval(advance,700);
 </script>
 </body>
 </html>
