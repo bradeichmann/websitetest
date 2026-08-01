@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHSAT Study App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* Setup Screen */
+        .setup-screen {
+            display: none;
+        }
+
+        .setup-screen.active {
+            display: block;
+        }
+
+        .setup-section {
+            margin-bottom: 30px;
+        }
+
+        .setup-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .option-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-btn {
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .toggle-btn:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .topic-filter {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .topic-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .topic-item:last-child {
+            border-bottom: none;
+        }
+
+        .topic-performance {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .performance-bar {
+            width: 60px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .performance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 30px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Test Screen */
+        .test-screen {
+            display: none;
+        }
+
+        .test-screen.active {
+            display: block;
+        }
+
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .test-progress {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .test-timer {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
+
+        .test-timer.warning {
+            color: #ff6b6b;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .passage-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .answer-options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .answer-option {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .answer-option:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .answer-option.selected {
+            background: #e3e8ff;
+            border-color: #667eea;
+        }
+
+        .answer-option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .answer-option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: space-between;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .nav-btn.primary:hover {
+            border-color: transparent;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            display: none;
+        }
+
+        .results-screen.active {
+            display: block;
+        }
+
+        .results-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .score-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .score-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .score-card-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .score-card-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .results-detail {
+            margin-top: 30px;
+        }
+
+        .results-detail h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .question-review {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .review-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .review-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .review-status.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .review-status.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .review-answer {
+            font-size: 13px;
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .review-explanation {
+            background: white;
+            padding: 12px;
+            border-left: 4px solid #667eea;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .end-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .end-buttons button {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .home-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .home-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .history-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .history-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .history-score {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .test-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .option-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 SHSAT Study App</h1>
+            <p>Practice tests to track your progress</p>
+        </div>
+
+        <div class="content">
+            <!-- Setup Screen -->
+            <div class="setup-screen active" id="setupScreen">
+                <h2 style="margin-bottom: 30px; color: #333;">Configure Your Practice Test</h2>
+
+                <div class="setup-section">
+                    <h2>Test Duration</h2>
+                    <div class="option-group" id="durationOptions">
+                        <button class="toggle-btn" data-duration="10">10 min</button>
+                        <button class="toggle-btn" data-duration="20">20 min</button>
+                        <button class="toggle-btn" data-duration="30">30 min</button>
+                        <button class="toggle-btn" data-duration="40">40 min</button>
+                        <button class="toggle-btn" data-duration="50">50 min</button>
+                        <button class="toggle-btn" data-duration="60">60 min</button>
+                        <button class="toggle-btn" data-duration="180">Full Test (180 min)</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h2>Test Mode</h2>
+                    <div class="option-group" id="timedOptions">
+                        <button class="toggle-btn active" data-timed="true">Timed</button>
+                        <button class="toggle-btn" data-timed="false">Untimed</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h2>Test Sections</h2>
+                    <div class="option-group" id="sectionOptions">
+                        <button class="toggle-btn active" data-section="both">Both</button>
+                        <button class="toggle-btn" data-section="ELA">ELA Only</button>
+                        <button class="toggle-btn" data-section="Math">Math Only</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h2>Focus by Topic</h2>
+                    <div class="topic-filter" id="topicFilter"></div>
+                </div>
+
+                <button class="start-btn" onclick="app.startTest()">Start Practice Test</button>
+
+                <div class="history-section">
+                    <h3>Recent Practice Tests</h3>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+
+            <!-- Test Screen -->
+            <div class="test-screen" id="testScreen">
+                <div class="test-header">
+                    <div class="test-progress">
+                        Question <span id="currentQuestion">1</span> of <span id="totalQuestions">0</span>
+                    </div>
+                    <div class="test-timer" id="timerDisplay">0:00</div>
+                </div>
+
+                <div class="question-container">
+                    <div id="passageContainer" class="passage-text" style="display: none;"></div>
+                    <div class="question-text" id="questionText"></div>
+                    <div class="answer-options" id="answerOptions"></div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevBtn" onclick="app.previousQuestion()" disabled>← Previous</button>
+                    <button class="nav-btn primary" id="nextBtn" onclick="app.nextQuestion()">Next →</button>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div class="results-screen" id="resultsScreen">
+                <div class="results-summary">
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">Your Score</div>
+                    <div class="score-display" id="finalScore">0/0</div>
+                    <div class="score-label" id="estimatedScore">Estimated Full Test Score: —</div>
+                    <div class="score-breakdown">
+                        <div class="score-card">
+                            <div class="score-card-label">ELA</div>
+                            <div class="score-card-value" id="elaScore">—</div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-card-label">Math</div>
+                            <div class="score-card-value" id="mathScore">—</div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-card-label">Accuracy</div>
+                            <div class="score-card-value" id="accuracy">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-detail">
+                    <h3>Review Your Answers</h3>
+                    <div id="reviewList"></div>
+                </div>
+
+                <div class="end-buttons">
+                    <button class="retry-btn" onclick="app.backToSetup()">Take Another Test</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data will be injected here
+        const questionsData = [{"id": 1, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "How does this sentence contribute to a central idea of the article?", "answers": ["The author is pointing out the fact that microbes do not have human abilities.", "The author is emphasizing the scientific reason why the five-second rule is wrong.", "The author is suggesting that more people need to pay attention to the five-second rule.", "The author is communicating her opinion that people tend to take the five-second rule too seriously."], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "The author's main argument is that scientific evidence proves the five-second rule doesn't work. The sentence in question emphasizes that experimental results show food gets contaminated regardless of time\u2014supporting the author's central idea that microbes act immediately, not according to human timing."}, {"id": 2, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "Which evidence from the passage best supports the idea that most people believe the five-second rule is valid?", "answers": ["\"And many might think that if they pick it up quickly, microbes haven't had time to crawl on.\" (paragraph 1)", "\"Others have tested the five-second rule, too!\" (paragraph 2)", "\"The teen found that after five seconds, the cookies and candy had picked up bacteria.\" (paragraph 3)", "\"Adult scientists have also taken on the rule.\" (paragraph 4)"], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "Looking at context, the reference to testing the five-second rule is from a previous post in the series. The author mentions this to show that multiple sources (blogs, videos, experiments) all reach the same conclusion: the five-second rule is a myth."}, {"id": 3, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "What does this phrase reveal?", "answers": ["Watermelon was the quickest to fall to the ground during the tests.", "Watermelon picked up the most bacteria in a variety of different tests.", "Watermelon acquired the most variety of different bacteria during the tests.", "Watermelon became covered in bacteria the fastest of any specimen in the tests."], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "The passage demonstrates through experiment and expert consensus that the five-second rule fails. The watermelon would pick up bacteria instantly upon contact, proving the rule is false."}, {"id": 4, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "Which evidence best supports the idea that the five-second rule is invalid?", "answers": ["\"The experiment's results showed that five seconds on the floor or not, all of the food hosted germs.\" (paragraph 1)", "\"Once food has hit the floor, maybe it's best to let it lie.\" (paragraph 2)", "\"The longer the bacteria had been left to dry on the floor, the fewer microbes that ended up on the food.\" (paragraph 5)", "\"The researchers also showed that carpet transferred the fewest bacteria.\" (paragraph 7)"], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "The author quotes this to show that previous research also found the five-second rule unreliable. This sentence supports the scientific argument by indicating independent verification of the finding."}, {"id": 5, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "What is the author's main purpose in writing the article?", "answers": ["To describe in detail the various attempts to debunk the five-second rule", "To determine whether the five-second rule is supported by scientific research", "To present data and facts that discredit the five-second rule", "To predict whether or not the five-second rule will remain an influence in daily life"], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "The author's purpose is to educate readers about what scientific evidence reveals. By laying out experimental results and expert conclusions, the author demonstrates WHY the rule fails rather than just asserting it does."}, {"id": 6, "section": "ELA", "passage": null, "question": null, "answers": ["It indicates that smooth surfaces will transfer more bacteria than carpeted surfaces.", "It demonstrates that larger pieces of food will be covered in more bacteria than smaller pieces.", "It portrays the amount of bacteria gained by various types of food over a period of thirty minutes.", "It reveals that the wetness of the food and the surfaces it falls on will impact the amount of bacteria that the specimen acquires."], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 7, "section": "ELA", "passage": "Everyone has dropped food on the floor. And many might think that if they pick it up quickly, microbes haven\u2019t had time to crawl on. The latest DIY Science video tests this \u201cfive-second rule\u201d with an experiment. Previous blog posts in this series detail how that experiment was designed and conducted. The experiment\u2019s results showed that five seconds on the floor or not, all of the food hosted germs. Others have tested the five-second rule, too! The general conclusion from them all is that microbes aren\u2019t waiting to count to five. Once food has hit the floor, maybe it\u2019s best to let it lie.", "question": "Which claim from the article is least supported by factual evidence?", "answers": ["People will continue to follow the five-second rule because it is socially accepted.", "Carpeted surfaces transfer fewer bacteria to food than smooth surfaces.", "Wet food will acquire more bacteria than dry food if dropped on the floor.", "Many studies and experiments on the five-second rule are not scientifically sound."], "correctAnswer": "d", "everettCorrect": false, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 8, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 9, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 10, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 11, "section": "ELA", "passage": null, "question": "These lines convey the poet\u2019s theme by", "answers": [], "correctAnswer": "d", "everettCorrect": false, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 12, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": false, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 13, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 14, "section": "ELA", "passage": null, "question": "The author\u2019s statement in this sentence supports the assertion that families today", "answers": [], "correctAnswer": "a", "everettCorrect": false, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 15, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension - Science", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 16, "section": "ELA", "passage": null, "question": "The author uses the word \u201cdevours\u201d to mean", "answers": [], "correctAnswer": "b", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 17, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 18, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 19, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 20, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 21, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 22, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 23, "section": "ELA", "passage": null, "question": "The \u201cconditions\u201d could best be described as", "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 24, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 25, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 26, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "answers are", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 27, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 28, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 29, "section": "ELA", "passage": null, "question": "The passage most strongly supports that the narrator generally responded to her father\u2019s comment with:", "answers": [], "correctAnswer": "a", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 30, "section": "ELA", "passage": null, "question": "Which of the following statements, if spoken by the narrator, would best capture the narrator\u2019s sentiment?", "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 31, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 32, "section": "ELA", "passage": null, "question": "The narrator characterizes herself as coming only \"fairly clean\" with her parents because she", "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 33, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 34, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 35, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 36, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 37, "section": "ELA", "passage": null, "question": "In the context of the passage, the author\u2019s description of what he does not hear while listening to Webster\u2019s music primarily emphasizes", "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 38, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 39, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 40, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 41, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 42, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "b", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 43, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "answers are", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 44, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 45, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 46, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "a", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 47, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "d", "everettCorrect": false, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 48, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 49, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "answers are", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 50, "section": "ELA", "passage": null, "question": null, "answers": [], "correctAnswer": "c", "everettCorrect": true, "topic": "Reading Comprehension", "explanation": "This reading comprehension question tests your understanding of the passage. Refer back to the specific part of the passage mentioned in the question to find your answer."}, {"id": 51, "section": "Math", "passage": null, "question": "If x=12\ud835\udc65=12 what is the value of 8x\u22123x8x\u22123x?", "answers": ["1212", "22", "5252", "55"], "correctAnswer": "b", "everettCorrect": true, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 52, "section": "Math", "passage": null, "question": "The 35-member Science Club is meeting to choose a student government representative. The members decide that the representative, who will be chosen at random, CANNOT be any of the 3 officers of the club. What is the probability that Juno, who is a member of the club but NOT an officer, will be chosen?", "answers": ["1818", "435435", "135135", "132132"], "correctAnswer": "d", "everettCorrect": true, "topic": "Data, Statistics, Probability", "explanation": "This is a data, statistics, probability problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 53, "section": "Math", "passage": null, "question": "If j=km3j=\ud835\udc58\ud835\udc5a3, j=540j=540, and m=10\ud835\udc5a=10, what is the value of k\ud835\udc58?", "answers": ["54", "13", "5.4", "0.54"], "correctAnswer": "d", "everettCorrect": false, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 54, "section": "Math", "passage": null, "question": "Ana plans to paint the 8-foot-high rectangular walls of her room, and before she buys paint she needs to know the area of the wall surface to be painted. Two walls are 10 feet wide, and the other two walls are 15 feet wide. The combined area of the 1 window and the 1 door in her room is 60 square feet. What is the area, in square feet, of the wall surface Ana plans to paint?", "answers": ["200", "340", "360", "400"], "correctAnswer": "b", "everettCorrect": false, "topic": "Quadrilaterals", "explanation": "This is a quadrilaterals problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 55, "section": "Math", "passage": null, "question": "8% of 60 is 1515 of what number?", "answers": ["0.96", "12", "24", "240"], "correctAnswer": "c", "everettCorrect": false, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 56, "section": "Math", "passage": null, "question": null, "answers": ["57\u00b0", "77\u00b0", "83\u00b0", "97\u00b0"], "correctAnswer": "c", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 57, "section": "Math", "passage": null, "question": "For which of the following conditions will the sum of integers c and d always be an odd integer? integer", "answers": ["c is an odd integer", "d is an odd integer", "c and d are both odd integers", "c is an even integer and d is an odd integer"], "correctAnswer": "answers are", "everettCorrect": true, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 58, "section": "Math", "passage": null, "question": null, "answers": ["3"], "correctAnswer": "answers are", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 59, "section": "Math", "passage": null, "question": "A wallet containing 5 five-dollar bills, 7 ten-dollar bills, and 9 twenty-dollar bills is found and returned to its owner. The wallet\u2019s owner will reward the finder with 1 bill drawn randomly from the wallet. What is the probability that the bill drawn will be a ten-dollar bill?", "answers": ["110110", "1717", "1313", "1212"], "correctAnswer": "c", "everettCorrect": true, "topic": "Data, Statistics, Probability", "explanation": "This is a data, statistics, probability problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 60, "section": "Math", "passage": null, "question": null, "answers": ["-6", "-7", "-8", "-20"], "correctAnswer": "a", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 61, "section": "Math", "passage": null, "question": null, "answers": ["Accepted error", "0.0000"], "correctAnswer": null, "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 62, "section": "Math", "passage": null, "question": null, "answers": ["Accepted error", "0.0000"], "correctAnswer": null, "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 63, "section": "Math", "passage": null, "question": null, "answers": ["Accepted error", "0.0000"], "correctAnswer": null, "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 64, "section": "Math", "passage": null, "question": null, "answers": ["12", "8", "6", "2"], "correctAnswer": "b", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 65, "section": "Math", "passage": null, "question": "To get a driver\u2019s license, and applicant must pass a written test and a driving test. Past records show that 80% of the applicants pass the written test and 60% of those who have passed the written test pass the driving test. Based on these figures, how many applicants in a random group of 1000 applicants would you expect to get a driver\u2019s license?", "answers": ["400", "480", "600", "800"], "correctAnswer": "b", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 66, "section": "Math", "passage": null, "question": "On a particular road map, 1212\u00a0inch represents 13 miles. About how many miles apart are 2 towns that are 212212 inches apart on this map?", "answers": ["26122612", "39", "65", "130"], "correctAnswer": "c", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 67, "section": "Math", "passage": null, "question": "A container is 1818\u00a0full of water. After 10 cups of water are added, the container is 3434 full. What is the volume of the container, in cups?", "answers": ["13121312", "1515", "1616", "4040"], "correctAnswer": "c", "everettCorrect": true, "topic": "Solids", "explanation": "This is a solids problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 68, "section": "Math", "passage": null, "question": "a+b3=1a+b3=1", "answers": ["3434", "1212", "1313", "1414"], "correctAnswer": "a", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 69, "section": "Math", "passage": null, "question": null, "answers": ["10", "9", "6", "4"], "correctAnswer": "c", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 70, "section": "Math", "passage": null, "question": "A train travels from New York City to Savannah, Georgia, a distance of 840 miles, at an average rate of 60 miles per hour. It arrives in Savannah at 6:00PM. At what time in the morning did the train depart for Savannah? (NOTE: New York and Savannah are in the same time zone).", "answers": ["4:00", "5:00", "6:00", "8:00"], "correctAnswer": "a", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 71, "section": "Math", "passage": null, "question": "Each number in a sequence is formed by multiplying the previous number by 4 and subtracting 5 from the result. If the 5th number in the sequence is 31, what is the 3rd number?", "answers": ["3.5", "4", "9", "14"], "correctAnswer": "a", "everettCorrect": true, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 72, "section": "Math", "passage": null, "question": null, "answers": ["3", "6", "9", "12"], "correctAnswer": "b", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 73, "section": "Math", "passage": null, "question": "The six consecutive integers below add up to 447.", "answers": ["72", "73", "74", "76"], "correctAnswer": "c", "everettCorrect": false, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 74, "section": "Math", "passage": null, "question": "The sum of 2 positive numbers is 151. The lesser number is 19 more than the square root of the greater number. What is the value of the lesser number?", "answers": ["11", "19", "30", "49"], "correctAnswer": "c", "everettCorrect": false, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 75, "section": "Math", "passage": null, "question": "Solve for \ud835\udc65 in terms of \ud835\udc66 if 3x+6=y3\ud835\udc65+6=\ud835\udc66.", "answers": ["x=3(y\u22126)\ud835\udc65=3(\ud835\udc66\u22126)", "x=3(y\u22126)x=3(y\u22126)", "x=y\u221223x=y\u221223", "x=\u22126+y3x=\u22126+y3"], "correctAnswer": "d", "everettCorrect": true, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 76, "section": "Math", "passage": null, "question": "What is the smallest integer greater than \u221a5858?", "answers": ["4", "7", "8", "10"], "correctAnswer": "c", "everettCorrect": false, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 77, "section": "Math", "passage": null, "question": "Integer \ud835\udc65 is evenly divisible by 3. Which expression below is also evenly divisible by 3?", "answers": ["2x+12\ud835\udc65+1", "3x\u221253\ud835\udc65\u22125", "4x\u221214\ud835\udc65\u22121", "4x+64\ud835\udc65+6"], "correctAnswer": "d", "everettCorrect": true, "topic": "Expressions", "explanation": "This is a expressions problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 78, "section": "Math", "passage": null, "question": "34+53+72=34+53+72=", "answers": ["270", "265", "255", "254"], "correctAnswer": "c", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 79, "section": "Math", "passage": null, "question": "For what value of n\ud835\udc5b is 2n\u2212n5=92\ud835\udc5b\u2212n5=9?", "answers": ["5", "9", "11", "21"], "correctAnswer": "a", "everettCorrect": true, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 80, "section": "Math", "passage": null, "question": "Between which two consecutive integers is the fraction 50135013?", "answers": ["2 and 3", "3 and 4", "4 and 5", "5 and 6"], "correctAnswer": "b", "everettCorrect": true, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 81, "section": "Math", "passage": null, "question": null, "answers": ["12", "30", "46", "73"], "correctAnswer": "d", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 82, "section": "Math", "passage": null, "question": "If \ud835\udc5b is an even integer greater than 2, what is the next greater even integer in terms of \ud835\udc5b?", "answers": ["\ud835\udc5b + 1", "\ud835\udc5b + 2", "\ud835\udc5b + 3", "2\ud835\udc5b"], "correctAnswer": "b", "everettCorrect": true, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 83, "section": "Math", "passage": null, "question": null, "answers": ["Accepted error", "0.0000"], "correctAnswer": null, "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 84, "section": "Math", "passage": null, "question": "Barry ordered a pizza. He ate 2929 of it and gave the rest to his 4 sisters. What fraction of the whole pizza will each of Barry\u2019s sisters receive if they share the remaining pizza equally?", "answers": ["7979", "4747", "1414", "736736"], "correctAnswer": "d", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 85, "section": "Math", "passage": null, "question": "Destiny wants to buy a scarf for her mother.", "answers": ["18.00", "19.50", "20.00", "21.50"], "correctAnswer": "b", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 86, "section": "Math", "passage": null, "question": "Quadrilateral WXYZ\u00a0is similar to quadrilateral LMNP", "answers": ["72", "74", "102", "112"], "correctAnswer": "c", "everettCorrect": true, "topic": "Quadrilaterals", "explanation": "This is a quadrilaterals problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 87, "section": "Math", "passage": null, "question": "The distance,\u00a0dd, a spring\u00a0stretches is directly proportional to the force,\u00a0FF, on the spring.\u00a0The constant of proportionality is 0.25. Which equation represents this relationship?", "answers": ["d=0.25Fd=0.25F", "d=0.25Fd=0.25F", "F=0.25dF=0.25d", "F=d+0.25F=d+0.25"], "correctAnswer": "b", "everettCorrect": false, "topic": "Rates/Ratios/Percents", "explanation": "This is a rates/ratios/percents problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 88, "section": "Math", "passage": null, "question": "A school club is selling T-shirts to raise money for a field trip. The club members \u2014", "answers": ["y=x24y=x24", "y=x19y=x19", "y=24xy=24x", "y=19xy=19x"], "correctAnswer": "d", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 89, "section": "Math", "passage": null, "question": "What is the value of the expression:\u00a0\u22128(4\u221216+2)\u2212(\u22123)3\u22128(4\u221216+2)\u2212(\u22123)3?", "answers": ["53", "90", "107", "127"], "correctAnswer": "c", "everettCorrect": false, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 90, "section": "Math", "passage": null, "question": "If\u00a0n=4n=4, what is the value of\u00a0(1+n3)5(1+n3)5?", "answers": ["10", "11", "13", "22"], "correctAnswer": "c", "everettCorrect": true, "topic": "Solving", "explanation": "This is a solving problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 91, "section": "Math", "passage": null, "question": "d\u22122.57=2.5d\u22122.57=2.5", "answers": ["1", "10", "16", "20"], "correctAnswer": "d", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 92, "section": "Math", "passage": null, "question": "Beatrice has 18 pencils. Beatrice has 2 more than 4 times the number of pencils Rick has. Exactly how many pencils does Rick have?", "answers": ["11 pencils", "7 pencils", "5 pencils", "4 pencils"], "correctAnswer": "d", "everettCorrect": true, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 93, "section": "Math", "passage": null, "question": "6\u226512x+216\u226512x+21", "answers": ["x\u2265\u221230x\u2265\u221230", "x\u2264\u221230x\u2264\u221230", "x\u226530x\u226530", "x\u226442x\u226442"], "correctAnswer": "b", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 94, "section": "Math", "passage": null, "question": "Which expression has a value between 11 and 12?", "answers": ["\u221a115115", "\u221a120120", "\u221a130130", "\u221a145145"], "correctAnswer": "c", "everettCorrect": true, "topic": "Expressions", "explanation": "This is a expressions problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 95, "section": "Math", "passage": null, "question": "In a scale diagram, 0.02 inches represents 44 feet. How many inches represent 1.1 inches?", "answers": ["500", "2200", "2420", "4400"], "correctAnswer": "c", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 96, "section": "Math", "passage": null, "question": "A counselor at Camp Chickadee surveys the campers to find out which morning activity they want to participate in. The results are shown in the table.", "answers": ["18%", "36%", "43%", "75%"], "correctAnswer": "b", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 97, "section": "Math", "passage": null, "question": "A spinner has 8 equal-sized sections.", "answers": ["0.15", "0.25", "0.3", "0.375"], "correctAnswer": "b", "everettCorrect": false, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 98, "section": "Math", "passage": null, "question": "Dawn randomly selected 6 books from the shelves of her local library and noted the number of pages in each book as follows: 320, 90, 400, 224, 184, 312.\n\n\n\nWhat is the average number of pages in the 6 books she selected?", "answers": ["140", "255", "280", "300"], "correctAnswer": "b", "everettCorrect": false, "topic": "Number Properties", "explanation": "This is a number properties problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 99, "section": "Math", "passage": null, "question": "The volume of a cube is\u00a01cm31cm3\u00a0and the surface area of one face of the cube is\u00a01cm21cm2.\u00a0What is the combined surface area of the other faces of the cube?", "answers": ["1cm21cm2", "3cm23cm2", "5cm25cm2", "6cm26cm2"], "correctAnswer": "c", "everettCorrect": false, "topic": "Solids", "explanation": "This is a solids problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}, {"id": 100, "section": "Math", "passage": null, "question": "By 7:00PM,\u00a01313\u00a0of the junior class had arrived at a school dance. By 8:00PM, 30 more juniors had arrived, raising attendance to\u00a01212\u00a0of the junior class. How many people are in the junior class?", "answers": ["30", "90", "120", "180"], "correctAnswer": "d", "everettCorrect": true, "topic": "Math", "explanation": "This is a math problem. To solve it, identify what you're asked to find and apply the relevant mathematical concept or formula."}];
+
+        class SHSATApp {
+            constructor() {
+                this.questions = questionsData;
+                this.testQuestions = [];
+                this.currentIndex = 0;
+                this.answers = {};
+                this.startTime = null;
+                this.timeLimit = null;
+                this.isTimed = true;
+                this.timerInterval = null;
+                this.testStartTime = null;
+                this.history = JSON.parse(localStorage.getItem('shsatHistory') || '[]');
+                this.selectedTopics = new Set();
+                this.selectedSection = 'both';
+                
+                this.initializeUI();
+            }
+
+            initializeUI() {
+                this.renderTopicFilter();
+                this.renderHistory();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('[data-duration]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-duration]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.timeLimit = parseInt(e.target.dataset.duration);
+                    });
+                });
+
+                document.querySelectorAll('[data-timed]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-timed]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.isTimed = e.target.dataset.timed === 'true';
+                    });
+                });
+
+                document.querySelectorAll('[data-section]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('[data-section]').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.selectedSection = e.target.dataset.section;
+                    });
+                });
+            }
+
+            renderTopicFilter() {
+                const topics = {};
+                this.questions.forEach(q => {
+                    if (!topics[q.topic]) {
+                        topics[q.topic] = { count: 0, correct: 0 };
+                    }
+                    topics[q.topic].count++;
+                    if (q.everettCorrect) topics[q.topic].correct++;
+                });
+
+                const filterHtml = Object.entries(topics)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([topic, stats]) => {
+                        const percentage = Math.round((stats.correct / stats.count) * 100);
+                        return `
+                            <div class="topic-item">
+                                <label style="display: flex; align-items: center; cursor: pointer; flex: 1;">
+                                    <input type="checkbox" data-topic="${topic}" style="margin-right: 10px; cursor: pointer;">
+                                    <span>${topic}</span>
+                                </label>
+                                <span class="topic-performance">${stats.correct}/${stats.count} (${percentage}%)</span>
+                            </div>
+                        `;
+                    })
+                    .join('');
+
+                document.getElementById('topicFilter').innerHTML = filterHtml;
+
+                document.querySelectorAll('[data-topic]').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            this.selectedTopics.add(e.target.dataset.topic);
+                        } else {
+                            this.selectedTopics.delete(e.target.dataset.topic);
+                        }
+                    });
+                });
+            }
+
+            renderHistory() {
+                const historyHtml = this.history.slice(-5).reverse().map((test, idx) => {
+                    const date = new Date(test.timestamp).toLocaleDateString();
+                    const accuracy = Math.round((test.correct / test.total) * 100);
+                    return `
+                        <div class="history-item">
+                            <div>
+                                <div style="font-weight: 600;">${test.section === 'both' ? 'Full' : test.section.toUpperCase()} Test (${test.total} q)</div>
+                                <div style="font-size: 12px; color: #999;">${date}</div>
+                            </div>
+                            <div class="history-score">${test.correct}/${test.total} (${accuracy}%)</div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('historyList').innerHTML = historyHtml || '<p style="color: #999; text-align: center;">No tests taken yet</p>';
+            }
+
+            startTest() {
+                // Filter questions
+                this.testQuestions = this.questions.filter(q => {
+                    let sectionMatch = this.selectedSection === 'both' || q.section === this.selectedSection;
+                    let topicMatch = this.selectedTopics.size === 0 || this.selectedTopics.has(q.topic);
+                    return sectionMatch && topicMatch;
+                });
+
+                if (this.testQuestions.length === 0) {
+                    alert('No questions match your filters. Please adjust your selections.');
+                    return;
+                }
+
+                // Calculate how many questions to show based on time limit
+                const questionsToShow = this.calculateQuestionsForTime();
+                this.testQuestions = this.testQuestions.slice(0, questionsToShow);
+
+                this.currentIndex = 0;
+                this.answers = {};
+                this.testStartTime = Date.now();
+                this.startTime = this.isTimed ? Date.now() : null;
+
+                document.getElementById('setupScreen').classList.remove('active');
+                document.getElementById('testScreen').classList.add('active');
+                document.getElementById('resultsScreen').classList.remove('active');
+
+                this.renderQuestion();
+
+                if (this.isTimed) {
+                    this.startTimer();
+                }
+            }
+
+            calculateQuestionsForTime() {
+                // Assuming ~1 minute per question on average
+                return Math.min(this.timeLimit, this.testQuestions.length);
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const remaining = Math.max(0, (this.timeLimit * 60) - elapsed);
+                    
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    
+                    const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    document.getElementById('timerDisplay').textContent = display;
+                    
+                    const timer = document.getElementById('timerDisplay');
+                    if (remaining < 300) {
+                        timer.classList.add('warning');
+                    }
+
+                    if (remaining === 0) {
+                        clearInterval(this.timerInterval);
+                        this.endTest();
+                    }
+                }, 100);
+            }
+
+            renderQuestion() {
+                const q = this.testQuestions[this.currentIndex];
+                
+                document.getElementById('currentQuestion').textContent = this.currentIndex + 1;
+                document.getElementById('totalQuestions').textContent = this.testQuestions.length;
+
+                // Passage
+                const passageContainer = document.getElementById('passageContainer');
+                if (q.passage) {
+                    passageContainer.textContent = q.passage;
+                    passageContainer.style.display = 'block';
+                } else {
+                    passageContainer.style.display = 'none';
+                }
+
+                // Question
+                document.getElementById('questionText').textContent = q.question;
+
+                // Answers
+                const answersHtml = q.answers.map((answer, idx) => {
+                    const letter = String.fromCharCode(65 + idx); // A, B, C, D
+                    const isSelected = this.answers[this.currentIndex] === letter;
+                    return `
+                        <div class="answer-option ${isSelected ? 'selected' : ''}" onclick="app.selectAnswer('${letter}')">
+                            <strong>${letter}.</strong> ${answer}
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('answerOptions').innerHTML = answersHtml;
+
+                // Navigation
+                document.getElementById('prevBtn').disabled = this.currentIndex === 0;
+                document.getElementById('nextBtn').textContent = this.currentIndex === this.testQuestions.length - 1 ? 'Finish' : 'Next →';
+            }
+
+            selectAnswer(letter) {
+                this.answers[this.currentIndex] = letter;
+                this.renderQuestion();
+            }
+
+            previousQuestion() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    this.renderQuestion();
+                }
+            }
+
+            nextQuestion() {
+                if (this.currentIndex < this.testQuestions.length - 1) {
+                    this.currentIndex++;
+                    this.renderQuestion();
+                } else {
+                    this.endTest();
+                }
+            }
+
+            endTest() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+
+                // Calculate results
+                let correct = 0;
+                let elaCorrect = 0, elaTot = 0;
+                let mathCorrect = 0, mathTot = 0;
+
+                this.testQuestions.forEach((q, idx) => {
+                    const userAnswer = this.answers[idx];
+                    const isCorrect = userAnswer && userAnswer.toLowerCase() === q.correctAnswer.toLowerCase();
+                    
+                    if (isCorrect) correct++;
+                    
+                    if (q.section === 'ELA') {
+                        elaTot++;
+                        if (isCorrect) elaCorrect++;
+                    } else {
+                        mathTot++;
+                        if (isCorrect) mathCorrect++;
+                    }
+                });
+
+                // Save to history
+                const testResult = {
+                    timestamp: new Date().toISOString(),
+                    correct: correct,
+                    total: this.testQuestions.length,
+                    section: this.selectedSection,
+                    elaCorrect: elaCorrect,
+                    elaTot: elaTot,
+                    mathCorrect: mathCorrect,
+                    mathTot: mathTot
+                };
+                this.history.push(testResult);
+                localStorage.setItem('shsatHistory', JSON.stringify(this.history));
+
+                // Estimate full test score
+                const accuracy = correct / this.testQuestions.length;
+                const estimatedFullScore = Math.round(accuracy * 100);
+
+                // Show results
+                document.getElementById('setupScreen').classList.remove('active');
+                document.getElementById('testScreen').classList.remove('active');
+                document.getElementById('resultsScreen').classList.add('active');
+
+                document.getElementById('finalScore').textContent = `${correct}/${this.testQuestions.length}`;
+                document.getElementById('accuracy').textContent = `${Math.round(accuracy * 100)}%`;
+                document.getElementById('estimatedScore').textContent = `Estimated accuracy: ${Math.round(accuracy * 100)}%`;
+                
+                if (elaTot > 0) {
+                    document.getElementById('elaScore').textContent = `${elaCorrect}/${elaTot}`;
+                } else {
+                    document.getElementById('elaScore').textContent = '—';
+                }
+                
+                if (mathTot > 0) {
+                    document.getElementById('mathScore').textContent = `${mathCorrect}/${mathTot}`;
+                } else {
+                    document.getElementById('mathScore').textContent = '—';
+                }
+
+                // Show review
+                const reviewHtml = this.testQuestions.map((q, idx) => {
+                    const userAnswer = this.answers[idx];
+                    const isCorrect = userAnswer && userAnswer.toLowerCase() === q.correctAnswer.toLowerCase();
+                    const answersMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+                    const correctAnswerText = q.answers[answersMap[q.correctAnswer.toUpperCase()]];
+                    const userAnswerText = userAnswer ? q.answers[answersMap[userAnswer.toUpperCase()]] : 'Not answered';
+
+                    return `
+                        <div class="question-review">
+                            <div class="review-status ${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</div>
+                            <div class="review-question">${q.question}</div>
+                            <div class="review-answer"><strong>Your answer:</strong> ${userAnswer ? userAnswer + '. ' + userAnswerText : 'Not answered'}</div>
+                            ${!isCorrect ? `<div class="review-answer"><strong>Correct answer:</strong> ${q.correctAnswer.toUpperCase()}. ${correctAnswerText}</div>` : ''}
+                            <div class="review-explanation"><strong>Explanation:</strong> ${q.explanation}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('reviewList').innerHTML = reviewHtml;
+            }
+
+            backToSetup() {
+                this.renderHistory();
+                document.getElementById('setupScreen').classList.add('active');
+                document.getElementById('testScreen').classList.remove('active');
+                document.getElementById('resultsScreen').classList.remove('active');
+            }
+        }
+
+        // Initialize the app
+        const app = new SHSATApp();
+    </script>
+</body>
+</html>
